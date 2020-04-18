@@ -15,4 +15,5 @@ class Environment:
     def round(self, pulled_arm):
         # Binomial distribution with a single trial N=1 is a Bernoulli distribution
         reward = np.random.binomial(1, self.probabilities[pulled_arm])
+        #WE HAVE A PROBLEM, WHY WE JUST GET INTEGER VALUES
         return reward

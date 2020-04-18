@@ -76,39 +76,30 @@ def step5(m, covered_rows, covered_cols):
     return m
 
 
-
-#-----------------------------------------FINAL ASSIGNEMENT------------------------------------------
-#1.Examine the rows, until it's founf a row where there is a single zero, than mark this zero by "1" to make the assignamente
-#2.Mark all the zeros lying in the column of hte marked zero
-#3.Mark all the zeros lying in the row of hte marked zero
-#4.Repeat until there are no nows and column with single zeros
-#5.If we have one row/column with more than one market 0 ("1"), we have to keep one and discard the other
-#6.Repeat until no unmarked zero is left in the matrix
-
-
-
-def find_rows_single_zero(m):
-    for i in range(m.shape[0]):
-        if np.sum(m[i, :] == 0) == 1:
-            j = np.argwhere(m[i, :] == 0).reshape(-1)[0]
+def find_rows_single_zero(matrix):
+    for i in range(0, matrix.shape[0]):
+        if np.sum(matrix[i, :] == 0) == 1:
+            j = np.argwhere(matrix[i, :] == 0).reshape(-1)[0]
             return i, j
     return False
 
 
-def find_cols_single_zero(m):
-    for j in range(m.shape[1]):
-        if np.sum(m[:, j] == 0) == 1:
-            i = np.argwhere(m[:, j] == 0).reshape(-1)[0]
+def find_cols_single_zero(matrix):
+    for i in range(0, matrix.shape[1]):
+        if np.sum(matrix[:, i] == 0) == 1:
+            j = np.argwhere(matrix[:, i] == 0).reshape(-1)[0]
             return i, j
-    return False
+        return False
 
 
 def assignment_single_zero_lines(m, assignment):
+    # assignment - boolean matrix
     val = find_rows_single_zero(m)
     while val:
         i, j = val[0], val[1]
         m[i, j] += 1
         m[:, j] += 1
+
         assignment[i, j] = 1
         val = find_rows_single_zero(m)
 
@@ -119,22 +110,38 @@ def assignment_single_zero_lines(m, assignment):
         m[i, j] += 1
         assignment[i, j] = 1
         val = find_cols_single_zero(m)
+
     return assignment
 
+
+def first_zero(m):
+    return np.argwhere(m == 0)[0][0], np.argwhere(m == 0)[0][1]
+
+
+# Final assignment
+# 1. Examine the rows successively until a row-wise exactly single zero is found
+#    mark this zero by 1 to make the assignment
+# 2. Mark all zeros lying in the column of the marked zero
+# 3. Do the same procedure for the columns also
+# 4. Repeat until there are no rows and columns with single zeros
+# 5. If there lies more than one of the unmarked zeroes in any column or row,
+#    then mark '1' one of the unmarked zeroes arbitrarily
+#    and mark a cross in the cells of remaining zeroes in its row and column
+# 6. Repeat all the process until no unmarked zero is left in the matrix
 def final_assignment(initial_matrix, m):
     assignment = np.zeros(m.shape, dtype=int)
     assignment = assignment_single_zero_lines(m, assignment)
+
     while np.sum(m == 0) > 0:
         i, j = first_zero(m)
         assignment[i, j] = 1
         m[i, :] += 1
         m[:, j] += 1
-        assignment = assignment_single_zero_lines(m, assignment) #5
+        assignment = assignment_single_zero_lines(m, assignment)
 
     return assignment * initial_matrix, assignment
 
 
-# This implementation aims at minimizing cost expressed in the adj matrix
 def hungarian_algorithm(matrix):
     m = matrix.copy()
     step1(m)
@@ -143,16 +150,17 @@ def hungarian_algorithm(matrix):
     max_length = np.maximum(m.shape[0], m.shape[1])
     while n_lines != max_length:
         lines = step3(m)
-        n_lines = len(lines[0]) + len(lines[1])
+        n_lines = len(lines[0] + len(lines[1]))
+
         if n_lines != max_length:
             step5(m, lines[0], lines[1])
+
     return final_assignment(matrix, m)
 
-def first_zero(m):
-    return np.argwhere(m == 0)[0][0], np.argwhere(m == 0)[0][1]
 
 
 for i in range(1000):
+    print(i)
     a = np.random.randint(100, size=(3, 3))
     res = hungarian_algorithm(a)
     print("\nMatrix:\n", a, "\nOptimal Matching:\n", res[1], "\nValue: ", np.sum(res[0]))
