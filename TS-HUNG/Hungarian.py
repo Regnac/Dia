@@ -151,19 +151,18 @@ def hungarian_algorithm(matrix):
 def first_zero(m):
     return np.argwhere(m == 0)[0][0], np.argwhere(m == 0)[0][1]
 
-a = np.random.randint(100, size=(3, 3)) #THIS IS THE MATRIX THAT WE ARE GOING TO PASS
-res = hungarian_algorithm(a)
-print("\nMatrix:\n", a, "\nOptimal Matching:\n", res[1], "\nValue: ", np.sum(res[0]))
+
+
+def getArmsFromMatching():
+    a = np.random.randint(100, size=(3, 3)) #THIS IS THE MATRIX THAT WE ARE GOING TO PASS
+    res = hungarian_algorithm(a)
+    print("\nMatrix:\n", a, "\nOptimal Matching:\n", res[1], "\nValue: ", np.sum(res[0]))
+    return np.matrix.flatten(res[1])  #this is a vector of your superarm  let's say 00100101
 
 #----------OUR MATRIX WILL HAVE 1 ON THE WINNING EDGES, WE HAVE TO TAKE THEIR INDICES AND PASS THEM TO THE TS-------------
 
-array  = np.matrix.flatten(res[1])  #this is a vector of your superarm  let's say 00100101
-# we would want to have the indices of the winning arm so 3,6,8
 
-i= 0
 
-while i < len(array):
-    if (array[i] != 0):
-        idx = array[i] * i
-        print(idx, "IDEXES")    # IDX IS THE ARRAY OF IDEX OF THE SUPERARM
-    i += 1
+
+
+

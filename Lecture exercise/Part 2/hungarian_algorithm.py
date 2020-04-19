@@ -156,3 +156,5 @@ for i in range(1000):
     a = np.random.randint(100, size=(3, 3))
     res = hungarian_algorithm(a)
     print("\nMatrix:\n", a, "\nOptimal Matching:\n", res[1], "\nValue: ", np.sum(res[0]))
+
+

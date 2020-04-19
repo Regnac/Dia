@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from Environment import *
 from Learner import *
 from CTSLearner import *
+from Hungarian import *
 
 
 n_arms = 4
@@ -11,20 +12,24 @@ opt = p[3]  # This is the optimal arm (0.35 is the greatest) --> My guess
 
 T = 300  # Time Horizon
 X = 1  #number of arms of the superarm
-n_experiments = 100    # number of experiments
+n_experiments = 1    # number of experiments
 
 ts_rewards_per_experiment = []
 gr_rewards_per_experiment = []
 
-for e in range(n_experiments):
+for e in range(n_experiments): #number of experiments
+    idx = getArmsFromMatching()  # RUN THE HUNGARIAN FOR THE FIRST TIME
     print("Experiment ", e)
     env = Environment(n_arms=n_arms, probabilities=p)
     cts_learner = CTSLearner(n_arms)
-    for t in range(T):   # TS Learner
-        for x in range(X): #here we pull every arm of the superarm
-            pulled_arm = cts_learner.pull_arm() #pull the arm
-            reward = env.round(pulled_arm) #assign the reward of the pulled arm, THE ENVIROMENT IS GIVING ME THE REWARD
-            cts_learner.update(pulled_arm, reward) #update the values in the ts_learner
+
+    for t in range(T):   # T = time orizon
+        for x in range(len(idx)): #here we pull every arm of the superarm
+            if(idx[x] != 0): #the arms with index 0 are not in the superarm
+                pulled_arm = cts_learner.pull_arm() #pull the arm
+                reward = env.round(pulled_arm) #assign the reward of the pulled arm, THE ENVIROMENT IS GIVING ME THE REWARD
+                cts_learner.update(pulled_arm, reward) #update the values in the ts_learner
+                idx = getArmsFromMatching()  # RUN THE HUNGARIAN AND GET THE SUPERARMS
     ts_rewards_per_experiment.append(cts_learner.collected_rewards)
 
 
