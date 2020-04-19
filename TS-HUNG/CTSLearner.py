@@ -11,7 +11,7 @@ class CTSLearner(Learner):
 
     def pull_arm(self): #here we have to select the arm to pull
                                        #two parameters alpha and beta of the distribution
-        idx = np.argmax(np.random.beta(self.beta_parameters[:, 0], self.beta_parameters[:, 1]))
+        idx = (np.random.beta(self.beta_parameters[:, 0], self.beta_parameters[:, 1]))
         #np.argmax select the index of the maximum value
         return idx #index
 
