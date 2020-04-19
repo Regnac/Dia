@@ -165,5 +165,5 @@ i= 0
 while i < len(array):
     if (array[i] != 0):
         idx = array[i] * i
-        print(idx, "IDEXES")   # IDX IS THE ARRAY OF IDEX OF THE SUPERARM
+        print(idx, "IDEXES")    # IDX IS THE ARRAY OF IDEX OF THE SUPERARM
     i += 1
