@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 from Environment import *
+from Learner import *
 from CTSLearner import *
+
 
 n_arms = 4
 p = np.array([0.15, 0.1, 0.1,
@@ -9,7 +11,7 @@ opt = p[3]  # This is the optimal arm (0.35 is the greatest) --> My guess
 
 T = 300  # Time Horizon
 
-n_experiments = 1000    # number of experiments
+n_experiments = 100    # number of experiments
 
 ts_rewards_per_experiment = []
 gr_rewards_per_experiment = []
@@ -17,14 +19,14 @@ gr_rewards_per_experiment = []
 for e in range(n_experiments):
     print("Experiment ", e)
     env = Environment(n_arms=n_arms, probabilities=p)
-    ts_learner = CTSLearner(n_arms)
+    cts_learner = CTSLearner(n_arms)
     for t in range(T):
         # TS Learner
-        pulled_arm = ts_learner.pull_arm() #pull the arm
+        pulled_arm = cts_learner.pull_arm() #pull the arm
         reward = env.round(pulled_arm) #assign the reward of the pulled arm, THE ENVIROMENT IS GIVING ME THE REWARD
         #WE HAVE TO SEND THE REWARD TO THE MATCHING ALGORITHM
-        ts_learner.update(pulled_arm, reward) #update the values in the ts_learner
-    ts_rewards_per_experiment.append(ts_learner.collected_rewards)
+        cts_learner.update(pulled_arm, reward) #update the values in the ts_learner
+    ts_rewards_per_experiment.append(cts_learner.collected_rewards)
 
 
 # Regret = T*opt - sum_t(rewards_t)
