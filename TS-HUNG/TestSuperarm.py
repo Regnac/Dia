@@ -10,7 +10,7 @@ p = np.array([0.15, 0.1, 0.1,
 opt = p[3]  # This is the optimal arm (0.35 is the greatest) --> My guess
 
 T = 300  # Time Horizon
-X = 10  #number of arms of the superarm
+X = 1  #number of arms of the superarm
 n_experiments = 100    # number of experiments
 
 ts_rewards_per_experiment = []
