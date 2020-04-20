@@ -18,18 +18,27 @@ ts_rewards_per_experiment = []
 gr_rewards_per_experiment = []
 
 for e in range(n_experiments): #number of experiments
+    n_arms = len(idx)
+    print("experiment number: ",e)
+    print("array of indexes", idx)
+
     idx = getArmsFromMatching()  # RUN THE HUNGARIAN FOR THE FIRST TIME
-    print("Experiment ", e)
     env = Environment(n_arms=n_arms, probabilities=p)
     cts_learner = CTSLearner(n_arms)
 
     for t in range(T):   # T = time orizon
         for x in range(len(idx)): #here we pull every arm of the superarm
             if(idx[x] != 0): #the arms with index 0 are not in the superarm
-                pulled_arm = cts_learner.pull_arm() #pull the arm
+                print("index", idx[x]*x)
+                pulled_arm =  idx[x]*x   #THIS IS THE INDEX OF THE ARM NEEDED TO PULL
+               # pulled_arm = cts_learner.pull_arm()  #IT WAS THIS WAY
+                print(pulled_arm)
+               # if (pulled_arm > 3):
+                #    pulled_arm = 1   #FOR SOME REASON THE EVIROMENT IS NOT HANDLING INDEX > 3
                 reward = env.round(pulled_arm) #assign the reward of the pulled arm, THE ENVIROMENT IS GIVING ME THE REWARD
                 cts_learner.update(pulled_arm, reward) #update the values in the ts_learner
                 idx = getArmsFromMatching()  # RUN THE HUNGARIAN AND GET THE SUPERARMS
+
     ts_rewards_per_experiment.append(cts_learner.collected_rewards)
 
 
