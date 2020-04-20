@@ -5,24 +5,23 @@ from CTSLearner import *
 from Hungarian import *
 
 
-n_arms = 4
-p = np.array([0.15, 0.1, 0.1,
-              0.35])  # probabilities for each arm (probability of obtaining 1 as a sample (Bernoulli lies in {0,1})
+n_arms = 4 # WHAT THE HELL DO I HAVE TO DO WITH PROBABILITIES?
+p = np.array([0.15, 0.1, 0.1,0.35])  # probabilities for each arm (probability of obtaining 1 as a sample (Bernoulli lies in {0,1})à
 opt = p[3]  # This is the optimal arm (0.35 is the greatest) --> My guess
 
 T = 300  # Time Horizon
 X = 1  #number of arms of the superarm
 n_experiments = 1    # number of experiments
-
+arraysRewards = []
 ts_rewards_per_experiment = []
 gr_rewards_per_experiment = []
 
 for e in range(n_experiments): #number of experiments
-    n_arms = len(idx)
+    idx = getArmsFromMatching()  # RUN THE HUNGARIAN FOR THE FIRST TIME
+   # n_arms = len(idx)
     print("experiment number: ",e)
     print("array of indexes", idx)
 
-    idx = getArmsFromMatching()  # RUN THE HUNGARIAN FOR THE FIRST TIME
     env = Environment(n_arms=n_arms, probabilities=p)
     cts_learner = CTSLearner(n_arms)
 
@@ -30,14 +29,18 @@ for e in range(n_experiments): #number of experiments
         for x in range(len(idx)): #here we pull every arm of the superarm
             if(idx[x] != 0): #the arms with index 0 are not in the superarm
                 print("index", idx[x]*x)
-                pulled_arm =  idx[x]*x   #THIS IS THE INDEX OF THE ARM NEEDED TO PULL
-               # pulled_arm = cts_learner.pull_arm()  #IT WAS THIS WAY
+               # pulled_arm =  idx[x]*x   #THIS IS THE INDEX OF THE ARM NEEDED TO PULL
+                pulled_arm = cts_learner.pull_arm()  #IT WAS THIS WAY
                 print(pulled_arm)
                # if (pulled_arm > 3):
                 #    pulled_arm = 1   #FOR SOME REASON THE EVIROMENT IS NOT HANDLING INDEX > 3
                 reward = env.round(pulled_arm) #assign the reward of the pulled arm, THE ENVIROMENT IS GIVING ME THE REWARD
+                print("reward of the arm", reward)
                 cts_learner.update(pulled_arm, reward) #update the values in the ts_learner
-                idx = getArmsFromMatching()  # RUN THE HUNGARIAN AND GET THE SUPERARMS
+                arraysRewards.append(reward) #THE ARRAY THAT WE ARE GOING TO PASS TO THE HUNGARIAN WITH THE REWARDS OF THE ARMS
+               # ---- THE PROBLEM IS THAT THE REWARD HERE IS JUST 0/1  
+    # ----- NOW I DO HAVE TO PASS THE REWARD BACK TO HUNGARIAN -------------
+            idx = getArmsFromMatching()  # RUN THE HUNGARIAN AND GET THE SUPERARMS
 
     ts_rewards_per_experiment.append(cts_learner.collected_rewards)
 
