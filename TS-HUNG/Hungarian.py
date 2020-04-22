@@ -152,9 +152,17 @@ def first_zero(m):
     return np.argwhere(m == 0)[0][0], np.argwhere(m == 0)[0][1]
 
 
-for i in range(1000):
-    a = np.random.randint(100, size=(3, 3))
+
+def getArmsFromMatching():
+    a = np.random.randint(100, size=(3, 3)) #THIS IS THE MATRIX THAT WE ARE GOING TO PASS
     res = hungarian_algorithm(a)
     print("\nMatrix:\n", a, "\nOptimal Matching:\n", res[1], "\nValue: ", np.sum(res[0]))
+    # ----------OUR MATRIX WILL HAVE 1 ON THE WINNING EDGES, WE HAVE TO TAKE THEIR INDICES AND PASS THEM TO THE TS-------------
+    return np.matrix.flatten(res[1])  #this is a vector of your superarm  let's say 00100101
+
+
+
+
+
 
 
