@@ -14,6 +14,8 @@ class Environment:
 
     def round(self, pulled_arm):
         # Binomial distribution with a single trial N=1 is a Bernoulli distribution
-        reward = np.random.binomial(1, self.probabilities[pulled_arm])  # Bernoulli
+        #reward = np.random.gaussian(1, self.probabilities[pulled_arm])  # Bernoulli
+        reward = np.random.uniform(0,1)
         #WE HAVE A PROBLEM, WHY WE JUST GET INTEGER VALUES, shouldnt they be between 0 and 1? or just 0/1?
         return reward
+

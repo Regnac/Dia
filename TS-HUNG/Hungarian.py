@@ -177,8 +177,9 @@ def first_zero(m):
 
 
 
-def getArmsFromMatching():
-    a = np.random.randint(100, size=(3, 3)) #THIS IS THE MATRIX THAT WE ARE GOING TO PASS
+def getArms_updateMatrix(b):
+
+    a = np.reshape(b, newshape=(4, 4))
     res = hungarian_algorithm(a)
     print("\nMatrix:\n", a, "\nOptimal Matching:\n", res[1], "\nValue: ", np.sum(res[0]))
     # ----------OUR MATRIX WILL HAVE 1 ON THE WINNING EDGES, WE HAVE TO TAKE THEIR INDICES AND PASS THEM TO THE TS-------------
