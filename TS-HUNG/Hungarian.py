@@ -16,7 +16,7 @@ def step1(m):
 
 
 def step2(m):
-    for i in range(0, a.shape[1]):
+    for i in range(0, m.shape[1]):
         m[:, i] = m[:, i] - np.min(m[:, i])
 
 
