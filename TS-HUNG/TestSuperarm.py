@@ -23,9 +23,8 @@ new_array = np.zeros(shape= 16)
 
 
 for e in range(n_experiments): #number of experiments
-    k = 4
-    j = 4
-    idx = getArms_updateMatrix(np.random.randint(1, size=(k, j)))  # RUN THE HUNGARIAN FOR THE FIRST TIME
+
+    idx = getArms_updateMatrix(np.random.randint(1, size=(16, 1)))  # RUN THE HUNGARIAN FOR THE FIRST TIME
     # n_arms = len(idx)
     print("experiment number: ",e)
     print("array of indexes", idx)

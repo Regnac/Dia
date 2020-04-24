@@ -179,11 +179,17 @@ def first_zero(m):
 
 def getArms_updateMatrix(b):
 
-    a = np.reshape(b, newshape=(4, 4))
+    a = np.reshape(b, newshape=(4, 4)) #we have to find a way how to update only the values of the new arms
     res = hungarian_algorithm(a)
     print("\nMatrix:\n", a, "\nOptimal Matching:\n", res[1], "\nValue: ", np.sum(res[0]))
     # ----------OUR MATRIX WILL HAVE 1 ON THE WINNING EDGES, WE HAVE TO TAKE THEIR INDICES AND PASS THEM TO THE TS-------------
     return np.matrix.flatten(res[1])  #this is a vector of your superarm  let's say 00100101
+
+
+def updatevalues(oldMatrix,newMatrix):
+
+
+    return b
 
 
 
