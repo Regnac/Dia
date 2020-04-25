@@ -21,10 +21,18 @@ ts_rewards_per_experiment = []
 gr_rewards_per_experiment = []
 new_array = np.zeros(shape= 16)
 
+def update(oldarray, newarray):
+    for x in range(len(new_array)):
+        if  new_array[x] == 0:
+            new_array[x] = oldarray[x]
+        new_array[x] += oldarray[x] #not sure about this
+
+    return 0
+
 
 for e in range(n_experiments): #number of experiments
-
-    idx = getArms_updateMatrix(np.random.randint(1, size=(16, 1)))  # RUN THE HUNGARIAN FOR THE FIRST TIME
+    oldvalues = np.zeros(shape= 16)
+    idx, rewards = getArms_updateMatrix(np.random.randint(1, size=(16, 1)), oldvalues = oldvalues)  # RUN THE HUNGARIAN FOR THE FIRST TIME
     # n_arms = len(idx)
     print("experiment number: ",e)
     print("array of indexes", idx)
@@ -36,26 +44,19 @@ for e in range(n_experiments): #number of experiments
         for x in range(len(idx)): #here we pull every arm of the superarm
 
             if(idx[x] != 0): #the arms with index 0 are not in the superarm
-
                # pulled_arm =  idx[x]*x   #THIS IS THE INDEX OF THE ARM NEEDED TO PULL
                 pulled_arm = cts_learner.pull_arm()  #IT WAS THIS WAY
-
-               # if (pulled_arm > 3):
-                #    pulled_arm = 1   #FOR SOME REASON THE EVIROMENT IS NOT HANDLING INDEX > 3
                 reward = env.round(pulled_arm) #assign the reward of the pulled arm, THE ENVIROMENT IS GIVING ME THE REWARD
                 new_array[x] = reward
-
-                print("reward of the arm", reward, x)
+                update(rewards,new_array)  #cumulative reward
                 cts_learner.update(pulled_arm, reward) #update the values in the ts_learner
 
-               # ---- THE PROBLEM IS THAT THE REWARD HERE IS JUST 0/1  
-    # ----- NOW I DO HAVE TO PASS THE REWARD BACK TO HUNGARIAN -------------
 
             print(new_array, "New array")
-
-            idx = getArms_updateMatrix(new_array)  # RUN THE HUNGARIAN AND GET THE SUPERARMS with the new arms
+            idx,rewards = getArms_updateMatrix(new_array, rewards)  # RUN THE HUNGARIAN AND GET THE SUPERARMS with the new arms
 
     ts_rewards_per_experiment.append(cts_learner.collected_rewards)
+
 
 
 # Regret = T*opt - sum_t(rewards_t)
@@ -63,6 +64,8 @@ for e in range(n_experiments): #number of experiments
 plt.figure(0)
 plt.xlabel("t")
 plt.ylabel("Regret")
+
+
 
 
 # Calculate the instantaneous regret for each t for each experiment
