@@ -24,7 +24,7 @@ cts_rewards_per_experiment = []
 for publisher in publishers:
     advertisers = []
     for i in range(N_ADS):
-        advertiser = Advertiser(bid=np.random.randint(1), publisher=publisher)
+        advertiser = Advertiser(bid=np.random.randint(2), publisher=publisher)
         advertisers.append(advertiser)
 
     for e in range(number_of_experiments):
