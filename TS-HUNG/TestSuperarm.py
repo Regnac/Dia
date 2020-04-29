@@ -66,8 +66,6 @@ plt.xlabel("t")
 plt.ylabel("Regret")
 
 
-
-
 # Calculate the instantaneous regret for each t for each experiment
 # Note: regret_t = optimal_arm_value - pulled_arm_value
 # Note: a positive regret is "bad", a negative regret is "good"

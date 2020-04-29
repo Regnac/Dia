@@ -2,12 +2,11 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 import copy
 
-"""
+
 # Convert to loss matrix
 def convert_matrix(m):
     max_val = np.max(m)
     return max_val - m
-"""
 
 
 def step1(m):

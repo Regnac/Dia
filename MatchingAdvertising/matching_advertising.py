@@ -24,7 +24,7 @@ cts_rewards_per_experiment = []
 for publisher in publishers:
     advertisers = []
     for i in range(N_ADS):
-        advertiser = Advertiser(bid=np.random.randint(2), publisher=publisher)
+        advertiser = Advertiser(bid=np.random.uniform(0,1 ) + 0.001, publisher=publisher)
         advertisers.append(advertiser)
 
     for e in range(number_of_experiments):
@@ -44,16 +44,17 @@ for publisher in publishers:
             print("CTS Step 1\n")
             # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM
             for A in range(N_ADS):
-                advertisers[A].q = np.random.beta(a=cts_learner.beta_parameters[A, :, 0],
+                advertisers[A].q = np.random.beta(a=cts_learner.beta_parameters[A, :, 0], #la beta andrà ad ingluenzare il mio qij
                                                   b=cts_learner.beta_parameters[A, :, 1],
                                                   size=publisher.n_slots)
 
             # Then we choose the superarm with maximum sum reward (obtained from publisher)
             superarm = publisher.allocate_ads(advertisers)
+            print("Superarm" , superarm)
 
             print("CTS Step 2\n")
             # 2. PLAY SUPERARM -  i.e. make a ROUND
-            reward = environment.simulate_users_behaviour(superarm)
+            reward = environment.simulate_users_behaviour(superarm) #il reward è esattamente l'amount of click
 
             print("CTS Step 3\n")
             # 3. UPDATE BETA DISTRIBUTIONS

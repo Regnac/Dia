@@ -1,4 +1,5 @@
 import numpy as np
+from hungarian_algorithm import convert_matrix as cm
 from hungarian_algorithm import hungarian_algorithm as hungarian_algorithm_max
 
 
@@ -17,11 +18,11 @@ class Publisher:
             for j in range(self.n_slots):
                 b_i = ads[i].bid
                 q_ij = ads[i].q[j]
-                graph_matrix[i][j] = b_i * q_ij
+                graph_matrix[i][j] = b_i * q_ij #perchè nella matrice è influent il bid?
         print("Ads allocating:")
         print(graph_matrix)
         print("Running hungarian...")
-        res = hungarian_algorithm_max(graph_matrix)
+        res = hungarian_algorithm_max(cm(graph_matrix))
         m = res[1]
         edges = []
         for i in range(len(m)):
