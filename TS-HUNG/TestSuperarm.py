@@ -13,7 +13,7 @@ n_arms = 4 # WHAT THE HELL DO I HAVE TO DO WITH PROBABILITIES?
 p = np.array([0.15, 0.1, 0.1,0.35])  # probabilities for each arm (probability of obtaining 1 as a sample (Bernoulli lies in {0,1})à
 opt = p[3]  # This is the optimal arm (0.35 is the greatest) --> My guess
 
-T = 1  # Time Horizon
+T = 100  # Time Horizon
 X = 1  #number of arms of the superarm
 n_experiments = 1    # number of experiments
 arraysRewards = []

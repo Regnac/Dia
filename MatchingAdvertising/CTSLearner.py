@@ -36,6 +36,7 @@ class CTSLearner:
     def update(self, superarm, reward):
         self.t += 1
         self.collected_rewards = np.append(self.collected_rewards, reward.sum())
+      #  print(reward, "collected rewards")
         for arm_i, arm in enumerate(superarm, start=0):
             self.update_observations(arm, reward[arm_i])
             self.beta_parameters[arm[0], arm[1], 0] += reward[arm_i]

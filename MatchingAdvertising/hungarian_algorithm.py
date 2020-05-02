@@ -148,7 +148,12 @@ def final_assignment(initial_matrix, m):
 
 
 def hungarian_algorithm(matrix):
+
     m = matrix.copy()
+    if(not isSquare(m)):
+        m = for_non_square_matrix(m)
+        matrix = m
+    print(m)
     step1(m)
     step2(m)
     n_lines = 0
@@ -158,8 +163,29 @@ def hungarian_algorithm(matrix):
         n_lines = len(lines[0]) + len(lines[1])
         if n_lines != max_length:
             step4(m, lines[0], lines[1])
+
     return final_assignment(matrix, m)
 
+def isSquare (m):
+    return all (len (row) == len (m) for row in m)
+
+def for_non_square_matrix(matrix):
+    numrows = len(matrix)  #  rows
+    numcols = len(matrix[0])  # columns
+
+    while (numrows > numcols):
+        print("increase the number of coulm with dummy number")
+        X0 = np.zeros((numrows,1)) #create a dummy column
+        numcols += 1
+        m_new = np.hstack((matrix, X0))  #add the dummy column
+
+    while (numrows < numcols):
+        print("increase the number of row with dummy number")
+        X0 = np.zeros(( 1,numcols))  # create a dummy column
+        numrows += 1
+        m_new = np.vstack([matrix,X0])
+
+    return m_new
 # n_exp = 100
 # count = 0
 # for ex in range(0, n_exp):

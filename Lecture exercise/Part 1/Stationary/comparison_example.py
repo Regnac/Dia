@@ -60,7 +60,7 @@ avg_regret = np.cumsum(avg_regrets)
 plt.plot(avg_regret, 'r')
 
 # The same is done for Greedy_Learner
-plt.plot(np.cumsum(np.mean(opt-gr_rewards_per_experiment, axis=0)), 'g')
+plt.plot(np.cumsum(np.mean(opt - gr_rewards_per_experiment, axis=0)), 'g')
 
 plt.legend(["TS", "Greedy"])
 plt.show()

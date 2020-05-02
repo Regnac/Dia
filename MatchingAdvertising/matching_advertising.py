@@ -15,8 +15,9 @@ number_of_experiments = 10
 
 # number of advertisers for each publisher
 N_ADS = 4
-publisher1 = Publisher(n_slots=4)
+n_slots = 4
 
+publisher1 = Publisher(n_slots)
 publishers = [publisher1]
 
 cts_rewards_per_experiment = []
@@ -51,9 +52,10 @@ for publisher in publishers:
             # Then we choose the superarm with maximum sum reward (obtained from publisher)
             superarm = publisher.allocate_ads(advertisers)
 
+
             print("CTS Step 2\n")
             # 2. PLAY SUPERARM -  i.e. make a ROUND
-            reward = environment.simulate_users_behaviour(superarm) #il reward è esattamente l'amount of click
+            reward = environment.simulate_users_behaviour(superarm)
 
             print("CTS Step 3\n")
             # 3. UPDATE BETA DISTRIBUTIONS
@@ -65,7 +67,7 @@ for publisher in publishers:
     # Plot graphics
     # NOW THIS OPT VALUE IS A CRUTCH. But we should determine it somehow. It MAKE influence on our plot!
     # Try to play with this value and you will see the 'normal' regret plot
-    opt = np.float64(2.6)  # TODO understand how do we obtain opt. I'm sure we have to look at constant q_ij
+    opt = np.float64(3)  # TODO understand how do we obtain opt. I'm sure we have to look at constant q_ij
     plt.figure(1)
     plt.xlabel("t")
     plt.ylabel("Regret")
