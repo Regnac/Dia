@@ -160,7 +160,6 @@ def hungarian_algorithm(matrix):
             step4(m, lines[0], lines[1])
     return final_assignment(matrix, m)
 
-
 # n_exp = 100
 # count = 0
 # for ex in range(0, n_exp):
@@ -187,3 +186,32 @@ def hungarian_algorithm(matrix):
 #         count += 1
 #
 # print("Correct Assignments: ", count * 100 / n_exp, "%")
+
+# TESTING WITH CONVERT MATRIX
+# errors = 0
+# for t in range(10000):
+#     a = np.random.randint(10, size=(5, 5)) + 1
+#     # print(a)
+#     m = hungarian_algorithm(a)
+#     # print(m[0])
+#     # print(m[1])
+#     sum1 = 0
+#     for i in range(len(a)):
+#         for j in range(len(a[i])):
+#             if m[1][i][j] == 1:
+#                 sum1 += a[i, j]
+#
+#     # print("-----")
+#     # print(convert_matrix(a))
+#     m = hungarian_algorithm(convert_matrix(a))
+#     # print(m[0])
+#     # print(m[1])
+#     sum2 = 0
+#     for i in range(len(a)):
+#         for j in range(len(a[i])):
+#             if m[1][i][j] == 1:
+#                 sum2 += a[i, j]
+#     print(sum1, sum2)
+#     if sum1 > sum2:
+#         errors += 1
+# print("errors:", errors)

@@ -1,6 +1,6 @@
 import numpy as np
-from hungarian_algorithm import convert_matrix as cm
-from hungarian_algorithm import hungarian_algorithm as hungarian_algorithm_max
+from hungarian_algorithm import hungarian_algorithm as hungarian_algorithm
+from hungarian_algorithm import convert_matrix as convert_matrix
 
 
 class Publisher:
@@ -16,17 +16,16 @@ class Publisher:
 
         for i in range(n_ads):
             for j in range(self.n_slots):
-                b_i = ads[i].bid
-                q_ij = ads[i].q[j]
-                graph_matrix[i][j] = b_i * q_ij #perchè nella matrice è influent il bid?
+                graph_matrix[i][j] = ads[i].sampled_weights[j]
         print("Ads allocating:")
         print(graph_matrix)
         print("Running hungarian...")
-        res = hungarian_algorithm_max(cm(graph_matrix))
+        res = hungarian_algorithm(convert_matrix(graph_matrix))
         m = res[1]
         edges = []
-        for i in range(len(m)):
-            for j in range(len(m[i])):
+        for j in range(len(m[i])):
+            for i in range(len(m)):
                 if m[i][j] == 1:
                     edges.append([i, j])
+        print(edges)
         return edges

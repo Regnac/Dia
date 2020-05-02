@@ -7,33 +7,25 @@ class AdAuctionEnvironment(Environment):
         self.publisher = publisher
         self.users = users
 
-    def simulate_users_behaviour(self, edges): #egdes are the edges of the superarm
+    def simulate_users_behaviour(self, edges):
         amount_of_clicks = np.zeros(len(edges))
-        for i in range(len(self.users)):
+        # Reward for Ad with max number of clicks will be 1, and reward with 0 num of clicks will be 0
+        max_clicks = 0
+        for u_num in range(len(self.users)):
             # TODO users select ad according to their features or some distribution
-            clicked_ad_number = self.handle_clicked_ad_number(np.random.randint(len(edges)) + self.use_user_features(self.users[i]))
-            amount_of_clicks[clicked_ad_number] += 1
-        amount_of_clicks /= len(self.users)
-        print("Amount of cliks ", amount_of_clicks)
+            for edge in edges:
+                i = edge[0]  # number of advertiser
+                j = edge[1]  # number of slot
+                # if weight of edge (i:j) is b_i * q_ij, then q_ij = w_ij/ b_i
+                real_q_ij = self.advertisers[i].q[j] / self.advertisers[i].bid
+                if np.random.binomial(1, real_q_ij) == 1:
+                    amount_of_clicks[j] += 1
+                    if amount_of_clicks[j] > max_clicks:
+                        max_clicks = amount_of_clicks[j]
+        print(amount_of_clicks.sum())
+        print(amount_of_clicks)
+        if max_clicks != 0:
+            amount_of_clicks /= max_clicks
+        print(amount_of_clicks.sum())
+        print(amount_of_clicks)
         return amount_of_clicks
-
-    def use_user_features(self, user):
-        skip_ad = 0
-        if(user.feature1 == 0):
-            skip_ad += 1
-        if(user.feature1 == 1):
-            skip_ad += -1
-        if (user.feature2 == 0):
-            skip_ad += 2
-        if (user.feature2 == 1):
-            skip_ad += -2
-
-        return skip_ad
-
-    def handle_clicked_ad_number(self,clicked_ad_number): #TAKE CARE OF SOME ARRAY INDEX OUT OF BOUND
-        if clicked_ad_number > 3:
-            clicked_ad_number -= 3
-        if clicked_ad_number < 0:
-            clicked_ad_number -= clicked_ad_number
-
-        return clicked_ad_number

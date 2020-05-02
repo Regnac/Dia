@@ -24,7 +24,7 @@ cts_rewards_per_experiment = []
 for publisher in publishers:
     advertisers = []
     for i in range(N_ADS):
-        advertiser = Advertiser(bid=np.random.uniform(0,1 ) + 0.001, publisher=publisher)
+        advertiser = Advertiser(bid=1, publisher=publisher)
         advertisers.append(advertiser)
 
     for e in range(number_of_experiments):
@@ -44,13 +44,12 @@ for publisher in publishers:
             print("CTS Step 1\n")
             # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM
             for A in range(N_ADS):
-                advertisers[A].q = np.random.beta(a=cts_learner.beta_parameters[A, :, 0], #la beta andrà ad ingluenzare il mio qij
-                                                  b=cts_learner.beta_parameters[A, :, 1],
-                                                  size=publisher.n_slots)
+                advertisers[A].sampled_weights = np.random.beta(a=cts_learner.beta_parameters[A, :, 0],
+                                                                b=cts_learner.beta_parameters[A, :, 1],
+                                                                size=publisher.n_slots)
 
             # Then we choose the superarm with maximum sum reward (obtained from publisher)
             superarm = publisher.allocate_ads(advertisers)
-            print("Superarm" , superarm)
 
             print("CTS Step 2\n")
             # 2. PLAY SUPERARM -  i.e. make a ROUND
@@ -63,11 +62,13 @@ for publisher in publishers:
         # collect results for publisher
         cts_rewards_per_experiment.append(cts_learner.collected_rewards)
 
-    # Plot graphics for
-    opt = 0
-    plt.figure(0)
+    # Plot graphics
+    # NOW THIS OPT VALUE IS A CRUTCH. But we should determine it somehow. It MAKE influence on our plot!
+    # Try to play with this value and you will see the 'normal' regret plot
+    opt = np.float64(2.6)  # TODO understand how do we obtain opt. I'm sure we have to look at constant q_ij
+    plt.figure(1)
     plt.xlabel("t")
     plt.ylabel("Regret")
-    plt.plot(np.cumsum(np.mean(cts_rewards_per_experiment, axis=0)), 'r')
-    plt.legend(["TS"])
+    plt.plot(np.cumsum(np.mean(opt - cts_rewards_per_experiment, axis=0)), 'r')
+    plt.legend(["CTS"])
     plt.show()
