@@ -67,7 +67,7 @@ for publisher in publishers:
     # Plot graphics
     # NOW THIS OPT VALUE IS A CRUTCH. But we should determine it somehow. It MAKE influence on our plot!
     # Try to play with this value and you will see the 'normal' regret plot
-    opt = np.float64(3)  # TODO understand how do we obtain opt. I'm sure we have to look at constant q_ij
+    opt = np.float64(2.6)  # TODO understand how do we obtain opt. I'm sure we have to look at constant q_ij
     plt.figure(1)
     plt.xlabel("t")
     plt.ylabel("Regret")
