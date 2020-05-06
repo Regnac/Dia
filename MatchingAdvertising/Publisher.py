@@ -23,8 +23,21 @@ class Publisher:
         res = hungarian_algorithm(convert_matrix(graph_matrix))
         m = res[1]
         edges = []
+        print("REEEEEEEEEEEES")
+        print(res[1])
         for j in range(len(m[i])):
             for i in range(len(m)):
+                # print("len(m[i])")
+                # print(len(m[i]))
+                # print("len(m)")
+                # print(len(m))
+                # print("m[i])")
+                # print(m[i])
+                # print("m")
+                # print(m)
+                # print("m[i][j]")
+                # print(m[i][j])
+                # print("f8nish")
                 if m[i][j] == 1:
                     edges.append([i, j])
         print(edges)

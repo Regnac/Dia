@@ -16,6 +16,10 @@ class AdAuctionEnvironment(Environment):
             for edge in edges:
                 i = edge[0]  # number of advertiser
                 j = edge[1]  # number of slot
+                # print("IIIIIIIIIIIIIIIIIIIIIIIIIIII")
+                # print(i)
+                # print("JJJJJJJJJ")
+                # print(j)
                 # if weight of edge (i:j) is b_i * q_ij, then q_ij = w_ij/ b_i
                 real_q_ij = self.advertisers[i].q[j] / self.advertisers[i].bid
                 if np.random.binomial(1, real_q_ij) == 1:
