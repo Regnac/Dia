@@ -24,7 +24,7 @@ class CTSLearner:
         # ...
         # ]
         self.rewards_per_arm = [[[] for j in range(n_slots)] for i in range(n_ads)]
-        self.collected_rewards = np.array([])
+        self.collected_rewards = []
 
     def update_observations(self, arm, reward):
         self.rewards_per_arm[arm[0]][arm[1]].append(reward)
@@ -35,8 +35,7 @@ class CTSLearner:
 
     def update(self, superarm, reward):
         self.t += 1
-        self.collected_rewards = np.append(self.collected_rewards, reward.sum())
-      #  print(reward, "collected rewards")
+        self.collected_rewards.append(reward)
         for arm_i, arm in enumerate(superarm, start=0):
             self.update_observations(arm, reward[arm_i])
             self.beta_parameters[arm[0], arm[1], 0] += reward[arm_i]

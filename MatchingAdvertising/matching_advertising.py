@@ -5,19 +5,26 @@ from Advertiser import *
 from AdAuctionEnvironment import *
 from User import *
 from CTSLearner import *
+from hungarian_algorithm import hungarian_algorithm, convert_matrix
 import numpy as np
 import matplotlib.pyplot as plt
 
-# T - Time horizon
-T = 365
+# T - Time horizon - number of days
+T = 80
 
-number_of_experiments = 10
+number_of_experiments = 100
 
 # number of advertisers for each publisher
-N_ADS = 4
-n_slots = 4
 
-publisher1 = Publisher(n_slots)
+N_ADS = 4
+N_SLOTS = 4
+N_USERS = 100  # number of users for each day
+real_q = np.random.uniform(size=(N_ADS, N_SLOTS))
+print("Real q")
+print(real_q)
+
+publisher1 = Publisher(n_slots=4)
+
 publishers = [publisher1]
 
 cts_rewards_per_experiment = []
@@ -31,46 +38,56 @@ for publisher in publishers:
     for e in range(number_of_experiments):
         cts_learner = CTSLearner(n_ads=N_ADS, n_slots=publisher.n_slots)
         for t in range(T):
-            print(t)
-            print("\n")
+            # print(t)
             users = []
-            N_USERS = 100  # TODO Get N_USERS from some distribution
             for i in range(N_USERS):
                 user = User(feature1=np.random.binomial(1, 0.5),
                             feature2=np.random.binomial(1, 0.5),
                             klass=np.random.randint(3))
                 users.append(user)
 
-            environment = AdAuctionEnvironment(advertisers, publisher, users)
-            print("CTS Step 1\n")
+            environment = AdAuctionEnvironment(advertisers, publisher, users, real_q=real_q)
+
             # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM
-            for A in range(N_ADS):
-                advertisers[A].sampled_weights = np.random.beta(a=cts_learner.beta_parameters[A, :, 0],
-                                                                b=cts_learner.beta_parameters[A, :, 1],
-                                                                size=publisher.n_slots)
+            samples = np.zeros(shape=(N_ADS, N_SLOTS))
+            for i in range(N_ADS):
+                for j in range(N_SLOTS):
+                    samples[i][j] = np.random.beta(a=cts_learner.beta_parameters[i][j][0],
+                                                   b=cts_learner.beta_parameters[i][j][1])
 
             # Then we choose the superarm with maximum sum reward (obtained from publisher)
-            superarm = publisher.allocate_ads(advertisers)
+            superarm = publisher.allocate_ads(samples)
 
+            for user in users:
+                # 2. PLAY SUPERARM -  i.e. make a ROUND
+                reward = environment.simulate_user_behaviour(user, superarm)
 
-            print("CTS Step 2\n")
-            # 2. PLAY SUPERARM -  i.e. make a ROUND
-            reward = environment.simulate_users_behaviour(superarm)
-
-            print("CTS Step 3\n")
-            # 3. UPDATE BETA DISTRIBUTIONS
-            cts_learner.update(superarm, reward)
+                # 3. UPDATE BETA DISTRIBUTIONS
+                cts_learner.update(superarm, reward)
 
         # collect results for publisher
         cts_rewards_per_experiment.append(cts_learner.collected_rewards)
 
-    # Plot graphics
-    # NOW THIS OPT VALUE IS A CRUTCH. But we should determine it somehow. It MAKE influence on our plot!
-    # Try to play with this value and you will see the 'normal' regret plot
-    opt = np.float64(2.6)  # TODO understand how do we obtain opt. I'm sure we have to look at constant q_ij
+    # Plot curve
+
+    opt = hungarian_algorithm(convert_matrix(real_q))
+    m = opt[1]
+    opt_q = np.array([])
+    for j in range(N_SLOTS):
+        for i in range(N_ADS):
+            if m[i][j] == 1:
+                opt_q = np.append(opt_q, real_q[i][j])
+    cts_rewards_per_experiment = np.array(cts_rewards_per_experiment)
+    print(opt_q)
+
+    cumsum = np.cumsum(np.mean(opt_q - cts_rewards_per_experiment, axis=0), axis=0)
+
     plt.figure(1)
     plt.xlabel("t")
     plt.ylabel("Regret")
-    plt.plot(np.cumsum(np.mean(opt - cts_rewards_per_experiment, axis=0)), 'r')
-    plt.legend(["CTS"])
+    colors = ['r', 'g', 'b', 'c']
+    for k in range(len(cumsum[0, :])):
+        plt.plot(cumsum[:, k], colors[k])
+    plt.plot(list(map(lambda x: np.sum(x), cumsum)), 'm')
+    plt.legend(["Slot 1", "Slot 2", "Slot 3", "Slot 4", "Total"])
     plt.show()
