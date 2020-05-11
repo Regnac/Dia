@@ -10,35 +10,22 @@ class Publisher:
         self.n_slots = n_slots
         self.slots = np.array([[] for i in range(n_slots)])  # or just [] or np.array[]
 
-    def allocate_ads(self, ads):
-        n_ads = len(ads)
+    def allocate_ads(self, samples):
+        n_ads = len(samples)
         graph_matrix = np.zeros(shape=(n_ads, self.n_slots))
 
         for i in range(n_ads):
             for j in range(self.n_slots):
-                graph_matrix[i][j] = ads[i].sampled_weights[j]
-        print("Ads allocating:")
-        print(graph_matrix)
-        print("Running hungarian...")
+                graph_matrix[i][j] = samples[i][j]
+        # print("Ads allocating:")
+        # print(graph_matrix)
+        # print("Running hungarian...")
         res = hungarian_algorithm(convert_matrix(graph_matrix))
         m = res[1]
         edges = []
-        print("REEEEEEEEEEEES")
-        print(res[1])
-        for j in range(len(m[i])):
-            for i in range(len(m)):
-                # print("len(m[i])")
-                # print(len(m[i]))
-                # print("len(m)")
-                # print(len(m))
-                # print("m[i])")
-                # print(m[i])
-                # print("m")
-                # print(m)
-                # print("m[i][j]")
-                # print(m[i][j])
-                # print("f8nish")
+        for j in range(self.n_slots):
+            for i in range(n_ads):
                 if m[i][j] == 1:
                     edges.append([i, j])
-        print(edges)
+        # print(edges)
         return edges

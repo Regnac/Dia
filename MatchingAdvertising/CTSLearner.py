@@ -13,7 +13,6 @@ class CTSLearner:
         # ...
         # ]
         self.beta_parameters = np.array([[np.ones(shape=2) for j in range(n_slots)] for i in range(n_ads)])
-
         # initialize parameters of learner
         self.t = 0
         # Rewards for each edge-arm
@@ -25,7 +24,7 @@ class CTSLearner:
         # ...
         # ]
         self.rewards_per_arm = [[[] for j in range(n_slots)] for i in range(n_ads)]
-        self.collected_rewards = np.array([])
+        self.collected_rewards = []
 
     def update_observations(self, arm, reward):
         self.rewards_per_arm[arm[0]][arm[1]].append(reward)
@@ -36,31 +35,8 @@ class CTSLearner:
 
     def update(self, superarm, reward):
         self.t += 1
-        i=0
-        for art in range(len(superarm)):
-            if superarm[art][0]==0:
-                i=art
-                break
-            else:
-                i+=1
-        print("IIIIIIIIIIIIIIIIIIIIIIIIIIII")
-        print(i)
-        print("reward[i]")
-        print(reward[i])
-        self.collected_rewards = np.append(self.collected_rewards, reward[i])
-      #  print(reward, "collected rewards")
+        self.collected_rewards.append(reward)
         for arm_i, arm in enumerate(superarm, start=0):
-            # print("self.beta_parameters")
-            # print(self.beta_parameters)
-            if arm_i==i:
-                self.update_observations(arm, reward[arm_i])
-                self.beta_parameters[arm[0], arm[1], 0] += reward[arm_i]
-                self.beta_parameters[arm[0], arm[1], 1] += 1 - reward[arm_i]
-            print(" reward[arm_i]")
-            print(reward[arm_i])
-            print("self.beta_parameters[arm[0], arm[1], 0]")
-            print(self.beta_parameters[arm[0], arm[1], 0])
-            print("self.beta_parameters[arm[0], arm[1], 1]")
-            print(self.beta_parameters[arm[0], arm[1], 1])
-            print("self.beta_parameters")
-            print(self.beta_parameters)
+            self.update_observations(arm, reward[arm_i])
+            self.beta_parameters[arm[0], arm[1], 0] += reward[arm_i]
+            self.beta_parameters[arm[0], arm[1], 1] += 1 - reward[arm_i]
