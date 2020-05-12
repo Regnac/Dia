@@ -4,10 +4,11 @@
     <content url="file://$MODULE_DIR$/Lecture exercise" />
     <content url="file://$MODULE_DIR$/MatchingAdvertising" />
     <content url="file://$MODULE_DIR$/TS-HUNG" />
-    <orderEntry type="jdk" jdkName="Python 3.7" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.6" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="TestRunnerService">
+    <option name="projectConfiguration" value="pytest" />
     <option name="PROJECT_TEST_RUNNER" value="pytest" />
   </component>
 </module>
