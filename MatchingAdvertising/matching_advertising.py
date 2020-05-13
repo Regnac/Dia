@@ -4,18 +4,15 @@ from Publisher import *
 from Advertiser import *
 from AdAuctionEnvironment import *
 from User import *
-from CTSLearner import *
+from PubblisherLearner import *
 from hungarian_algorithm import hungarian_algorithm, convert_matrix
 import numpy as np
 import matplotlib.pyplot as plt
 
 # T - Time horizon - number of days
 T = 80
-
 number_of_experiments = 50
-
 # number of advertisers for each publisher
-
 N_ADS = 6
 N_SLOTS = 4
 N_USERS = 100  # number of users for each day
@@ -23,14 +20,12 @@ real_q = np.random.uniform(size=(N_ADS, N_SLOTS))
 print("Real q")
 print(real_q)
 
-
 if(N_ADS != N_SLOTS):
     while (N_ADS > N_SLOTS):
         print("increase the number of coulm with dummy number")
         X0 = np.zeros((N_ADS,1)) #create a dummy column
         N_SLOTS += 1
         real_q = np.hstack((real_q, X0))  #add the dummy column
-
     while (N_ADS < N_SLOTS):
         print("increase the number of row with dummy number")
         X0 = np.zeros(( 1,N_SLOTS))  # create a dummy column
@@ -72,7 +67,7 @@ for publisher in publishers:
                                                    b=cts_learner.beta_parameters[i][j][1])
 
             # Then we choose the superarm with maximum sum reward (obtained from publisher)
-            superarm = publisher.allocate_ads(samples)   #THIS IS DIFFERENT THAN BEFORE
+            superarm = publisher.allocate_ads(samples, real_q)   #THIS IS DIFFERENT THAN BEFORE
 
             for user in users:
                 # 2. PLAY SUPERARM -  i.e. make a ROUND
@@ -86,7 +81,7 @@ for publisher in publishers:
 
     # Plot curve
 
-    opt = hungarian_algorithm(convert_matrix(real_q))
+    opt = hungarian_algorithm(convert_matrix(real_q))   #get the optimal q
     m = opt[1]
     opt_q = np.array([])
     for j in range(N_SLOTS):
