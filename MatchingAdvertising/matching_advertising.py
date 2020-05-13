@@ -11,14 +11,14 @@ import matplotlib.pyplot as plt
 
 # T - Time horizon - number of days
 T = 80
-number_of_experiments = 50
+number_of_experiments = 30
 # number of advertisers for each publisher
-N_ADS = 6
+N_ADS = 4
 N_SLOTS = 4
 N_USERS = 100  # number of users for each day
 real_q = np.random.uniform(size=(N_ADS, N_SLOTS))
 print("Real q")
-print(real_q)
+
 
 if(N_ADS != N_SLOTS):
     while (N_ADS > N_SLOTS):
@@ -32,6 +32,7 @@ if(N_ADS != N_SLOTS):
         N_ADS += 1
         real_q = np.vstack([real_q,X0])
 
+print(real_q)
 
 publisher1 = Publisher(N_SLOTS)
 
@@ -42,7 +43,7 @@ cts_rewards_per_experiment = []
 for publisher in publishers:
     advertisers = []
     for i in range(N_ADS):
-        advertiser = Advertiser(bid=1, publisher=publisher)
+        advertiser = Advertiser(bid=np.random.uniform(0,1), publisher=publisher)
         advertisers.append(advertiser)
 
     for e in range(number_of_experiments):
@@ -67,7 +68,7 @@ for publisher in publishers:
                                                    b=cts_learner.beta_parameters[i][j][1])
 
             # Then we choose the superarm with maximum sum reward (obtained from publisher)
-            superarm = publisher.allocate_ads(samples, real_q)   #THIS IS DIFFERENT THAN BEFORE
+            superarm = publisher.allocate_ads(samples, real_q, advertisers)   #THIS IS DIFFERENT THAN BEFORE
 
             for user in users:
                 # 2. PLAY SUPERARM -  i.e. make a ROUND
