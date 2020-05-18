@@ -154,8 +154,8 @@ def hungarian_algorithm(matrix):
         m = for_non_square_matrix(m)
         matrix = m
     print(m)
-    step1(m)
-    step2(m)
+    #step1(m)
+    #step2(m)
     n_lines = 0
     max_length = np.maximum(m.shape[0], m.shape[1])
     while n_lines != max_length:
@@ -172,7 +172,7 @@ def isSquare (m):
 def for_non_square_matrix(matrix):
     numrows = len(matrix)  #  rows
     numcols = len(matrix[0])  # columns
-
+    print("Refactor the matrix")
     while (numrows > numcols):
         print("increase the number of coulm with dummy number")
         X0 = np.zeros((numrows,1)) #create a dummy column

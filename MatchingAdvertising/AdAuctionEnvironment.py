@@ -13,6 +13,14 @@ class AdAuctionEnvironment(Environment):
         for edge in edges:
             i = edge[0]  # number of advertiser
             j = edge[1]  # number of slot
-            q_ij = self.real_q[i][j]  # real probability of click
+         #   if(user.feature1 == 1):
+         #       q_ij = self.real_q[i][j] + 0.001 # real probability of click
+         #   if (user.feature1 != 1):
+         #       q_ij = self.real_q[i][j] - 0.001  # real probability of click
+         #   if (user.feature2 == 1):
+         #       q_ij = self.real_q[i][j] + 0.001  # real probability of click
+         #   if (user.feature2 != 1):
+         #       q_ij = self.real_q[i][j] - 0.001  # real probability of click
+            q_ij = self.real_q[i][j]
             reward[j] = np.random.binomial(1, q_ij)
         return reward

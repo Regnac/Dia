@@ -5,7 +5,7 @@ from numpy.core.multiarray import ndarray
 
 from Environment import *
 from Learner import *
-from CTSLearner import *
+from PubblisherLearner import *
 from Hungarian import *
 
 
