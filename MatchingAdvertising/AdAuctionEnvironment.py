@@ -1,4 +1,5 @@
 from Environment import *
+#import Context
 
 
 class AdAuctionEnvironment(Environment):
@@ -13,14 +14,17 @@ class AdAuctionEnvironment(Environment):
         for edge in edges:
             i = edge[0]  # number of advertiser
             j = edge[1]  # number of slot
-         #   if(user.feature1 == 1):
-         #       q_ij = self.real_q[i][j] + 0.001 # real probability of click
-         #   if (user.feature1 != 1):
-         #       q_ij = self.real_q[i][j] - 0.001  # real probability of click
-         #   if (user.feature2 == 1):
-         #       q_ij = self.real_q[i][j] + 0.001  # real probability of click
-         #   if (user.feature2 != 1):
-         #       q_ij = self.real_q[i][j] - 0.001  # real probability of click
-            q_ij = self.real_q[i][j]
+            classuser = self.get_user_class(user.feature1, user.feature2)
+            q_ij = self.real_q[classuser][i][j]
             reward[j] = np.random.binomial(1, q_ij)
         return reward
+
+    def get_user_class(self,feature1,feature2):
+        if (feature1 == 0 and feature2 == 0):
+            return 0
+        if (feature1 == 1 and feature2 == 0):
+            return 1
+        if (feature1 == 0 and feature2 == 1):
+            return 2
+        if(feature1 == 1 and feature2 == 1):
+            return 3

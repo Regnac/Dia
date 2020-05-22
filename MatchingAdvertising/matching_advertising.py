@@ -15,11 +15,32 @@ number_of_experiments = 30
 # number of advertisers for each publisher
 N_ADS = 4
 N_SLOTS = 4
-N_USERS = 100  # number of users for each day
-real_q = np.random.uniform(size=(N_ADS, N_SLOTS))
-print("Real q")
+N_USERS = 50  # number of users for each day
+N_CLASS = 4
+real_q = []
+for i in range(N_CLASS):
+    array = np.random.uniform(size=(N_ADS, N_SLOTS))
+    real_q.append(array)
 
-
+#THIS Method return the summed array since there's no built-in sum element wise
+def loop_inplace_sum(arrlist):
+    # assumes len(arrlist) > 0
+    sum = arrlist[0].copy()
+    for a in arrlist[1:]:
+        sum += a
+    return sum
+#real_q = np.random.uniform(size=(N_ADS, N_SLOTS))
+# print("real_q for classe")
+# print(real_q[0])
+# print(real_q[1])
+# print(real_q[2])
+# print(real_q[3])
+real = loop_inplace_sum(real_q)
+# print("Summed value of q")
+# print(real)
+real /= N_CLASS
+# print("mean q")
+# print(real)
 if(N_ADS != N_SLOTS):
     while (N_ADS > N_SLOTS):
         print("increase the number of coulm with dummy number")
@@ -32,13 +53,15 @@ if(N_ADS != N_SLOTS):
         N_ADS += 1
         real_q = np.vstack([real_q,X0])
 
-print(real_q)
 
 publisher1 = Publisher(N_SLOTS)
 
 publishers = [publisher1]
 
 cts_rewards_per_experiment = []
+
+
+#Ctx = Context(N_USERS)
 
 for publisher in publishers:
     advertisers = []
@@ -52,10 +75,10 @@ for publisher in publishers:
             # print(t)
             users = []
             for i in range(N_USERS):
-                user = User(feature1=np.random.binomial(1, 0.5),  #define users
+                user = User(feature1=np.random.binomial(1, 0.5),  # define users
                             feature2=np.random.binomial(1, 0.5),
                             klass=np.random.randint(3))
-                users.append(user)  #append users
+                users.append(user)  # append users
 
             environment = AdAuctionEnvironment(advertisers, publisher, users, real_q=real_q) #create the envirometn
 
@@ -68,10 +91,14 @@ for publisher in publishers:
                                                    b=cts_learner.beta_parameters[i][j][1])
 
             # Then we choose the superarm with maximum sum reward (obtained from publisher)
-            superarm = publisher.allocate_ads(samples, real_q, advertisers)   #THIS IS DIFFERENT THAN BEFORE
+               #THIS IS DIFFERENT THAN BEFORE
+            superarm = publisher.allocate_ads(samples, real_q[0], advertisers)
 
             for user in users:
                 # 2. PLAY SUPERARM -  i.e. make a ROUND
+                # publish allocate based on different user, NOT WORKING
+                # index = environment.get_user_class(user.feature1,user.feature2)
+                # superarm = publisher.allocate_ads(samples, real_q[index], advertisers)
                 reward = environment.simulate_user_behaviour(user, superarm)
 
                 # 3. UPDATE BETA DISTRIBUTIONS
@@ -81,16 +108,18 @@ for publisher in publishers:
         cts_rewards_per_experiment.append(cts_learner.collected_rewards)
 
     # Plot curve
-
-    opt = hungarian_algorithm(convert_matrix(real_q))   #get the optimal q
+    opt = hungarian_algorithm(convert_matrix(real))   #get the optimal q
     m = opt[1]
     opt_q = np.array([])
     for j in range(N_SLOTS):
         for i in range(N_ADS):
             if m[i][j] == 1:
-                opt_q = np.append(opt_q, real_q[i][j])
+                opt_q = np.append(opt_q, real[i][j])
     cts_rewards_per_experiment = np.array(cts_rewards_per_experiment)
-   # print(opt_q)
+
+    print("OPT")
+    print(opt_q)
+
 
     cumsum = np.cumsum(np.mean(opt_q - cts_rewards_per_experiment, axis=0), axis=0)
 
