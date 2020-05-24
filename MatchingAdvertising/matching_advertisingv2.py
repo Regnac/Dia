@@ -9,8 +9,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # T - Time horizon - number of days
-T = 60
-number_of_experiments = 20
+T = 80
+number_of_experiments = 5
 # number of advertisers for each publisher
 N_ADS = 4
 N_SLOTS = 4
