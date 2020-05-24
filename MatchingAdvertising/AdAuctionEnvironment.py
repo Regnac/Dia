@@ -24,7 +24,7 @@ class AdAuctionEnvironment(Environment):
             return 0
         if (feature1 == 1 and feature2 == 0):
             return 1
-        if (feature1 == 0 and feature2 == 1):
-            return 2
-        if(feature1 == 1 and feature2 == 1):
-            return 3
+        if (feature1 == 0 and feature2 == 1): #just using 2 classes to make the code run faster
+            return 0  #should be 2
+        if(feature1 == 1 and feature2 == 1): #just using 2 classes to make the code run faster
+            return 1   #should be 3

@@ -14,8 +14,8 @@ number_of_experiments = 5
 # number of advertisers for each publisher
 N_ADS = 4
 N_SLOTS = 4
-N_USERS = 50  # number of users for each day
-N_CLASS = 4
+N_USERS = 5  # number of users for each day
+N_CLASS = 2 #just using 2 classes to make the code run faster
 real_q = []
 for i in range(N_CLASS):
     array = np.random.uniform(size=(N_ADS, N_SLOTS))
@@ -52,16 +52,11 @@ if(N_ADS != N_SLOTS):
         N_ADS += 1
         real_q = np.vstack([real_q,X0])
 
-
 publisher1 = Publisher(N_SLOTS)
-
 publishers = [publisher1]
-
 
 cts_rewards_per_experiment = []
 cts_rewards_per_experiment_2 = []
-
-
 #Ctx = Context(N_USERS)
 
 for publisher in publishers:
@@ -88,15 +83,15 @@ for publisher in publishers:
             samples2 = []
             for z in range(N_CLASS):
                 samples2.append(np.zeros(shape=(N_ADS, N_SLOTS)))
-            for z in range(N_CLASS):
+            for z in range(N_CLASS): #samples for the dis-aggregate model that differenciate z
                 for i in range(N_ADS):
                     for j in range(N_SLOTS):
                         #print(i,j)
-                        samples2[z][i][j] = np.random.beta(a=cts_learner.beta_parameters[i][j][0],  #update samples
-                                                       b=cts_learner.beta_parameters[i][j][1])
+                        samples2[z][i][j] = np.random.beta(a=cts_learner2.beta_parameters[z][i][j][0],  #update samples
+                                                       b=cts_learner2.beta_parameters[z][i][j][1])
 
             samples = np.zeros(shape=(N_ADS, N_SLOTS))
-            for i in range(N_ADS):
+            for i in range(N_ADS):  #sample for the aggregate model that have no difference with z
                 for j in range(N_SLOTS):
                     # print(i,j)
                     samples[i][j] = np.random.beta(a=cts_learner.beta_parameters[i][j][0],  # update samples
@@ -109,10 +104,10 @@ for publisher in publishers:
                 # 2. PLAY SUPERARM -  i.e. make a ROUND
                 # publish allocate based on different user, NOT WORKING
                 index = environment.get_user_class(user.feature1,user.feature2)
-                superarm1 = publisher.allocate_ads(samples, real_q[index], advertisers)
-                superarm2 = publisher.allocate_ads(samples2[index], real_q[index], advertisers)
-                reward = environment.simulate_user_behaviour(user, superarm1)
-                reward2 = environment.simulate_user_behaviour(user, superarm2)
+                superarm1 = publisher.allocate_ads(samples, real_q[index], advertisers)  #aggregated
+                superarm2 = publisher.allocate_ads(samples2[index], real_q[index], advertisers) #disaggregated
+                reward = environment.simulate_user_behaviour(user, superarm1) #aggregated
+                reward2 = environment.simulate_user_behaviour(user, superarm2)  #disaggregated
                 # 3. UPDATE BETA DISTRIBUTIONS
                 cts_learner.update(superarm1, reward)
                 cts_learner2.update(superarm2, reward2, index)

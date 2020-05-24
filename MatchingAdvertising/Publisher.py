@@ -17,10 +17,10 @@ class Publisher:
 
         for i in range(n_ads):
             for j in range(self.n_slots):
-                 # NOT WORKING
-                 # if(i == 0):
+                 # NOT WORKING            THIS IS THE WAY IT SHOULD BE!!!!!!
+                #  if(i == 0):
                  #    graph_matrix[i][j] = samples[i][j] * advertisers[j].bid  #q_ij * bid_j
-                 # if(i != 0):
+                #  if(i != 0):
                  #     graph_matrix[i][j] = real_q[i][j] * advertisers[j].bid   #WE KNOW Q FOR STOCHASTIC ADVERTISER
                 #WORKING
                 graph_matrix[i][j] = samples[i][j] * advertisers[j].bid
