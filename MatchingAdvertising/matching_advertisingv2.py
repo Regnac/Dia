@@ -9,8 +9,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # T - Time horizon - number of days
-T = 40
-number_of_experiments = 5
+T = 60
+number_of_experiments = 20
 # number of advertisers for each publisher
 N_ADS = 4
 N_SLOTS = 4
@@ -141,13 +141,15 @@ for publisher in publishers:
                 if m[i][j] == 1:
                     opt2_q = np.append(opt2_q, real_q[z][i][j])
         cts_rewards_per_experiment_2 = np.array(cts_rewards_per_experiment_2)
-
+    opt2_q /= N_CLASS
+    cts_rewards_per_experiment_2 /= N_CLASS
     print("OPT")
     print(opt_q)
 
 
     cumsum = np.cumsum(np.mean(opt_q - cts_rewards_per_experiment, axis=0), axis=0)
     cumsum2 = np.cumsum(np.mean(opt2_q - cts_rewards_per_experiment_2, axis=0), axis=0)
+
     plt.figure(1)
     plt.xlabel("t")
     plt.ylabel("Regret")
@@ -156,5 +158,5 @@ for publisher in publishers:
         #plt.plot(cumsum[:, k], colors[k])
     plt.plot(list(map(lambda x: np.sum(x), cumsum)), 'm')
     plt.plot(list(map(lambda x: np.sum(x), cumsum2)), 'r')
-  #  plt.legend(["Slot 1", "Slot 2", "Slot 3", "Slot 4", "Total"])
+    plt.legend(["aggregate", "disaggregate"])
     plt.show()
