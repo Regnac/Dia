@@ -115,7 +115,7 @@ for publisher in publishers:
                 reward2 = environment.simulate_user_behaviour(user, superarm2)
                 # 3. UPDATE BETA DISTRIBUTIONS
                 cts_learner.update(superarm1, reward)
-                cts_learner2.update(superarm2, reward, index)
+                cts_learner2.update(superarm2, reward2, index)
 
         # collect results for publisher
         cts_rewards_per_experiment.append(cts_learner.collected_rewards)
