@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # T - Time horizon - number of days
-T = 80
+T = 365
 
 number_of_experiments = 100
 
@@ -18,7 +18,7 @@ number_of_experiments = 100
 
 N_ADS = 4
 N_SLOTS = 4
-N_USERS = 100  # number of users for each day
+N_USERS = 5  # number of users for each day
 real_q = np.random.uniform(size=(N_ADS, N_SLOTS))
 print("Real q")
 print(real_q)
@@ -36,9 +36,9 @@ for publisher in publishers:
         advertisers.append(advertiser)
 
     for e in range(number_of_experiments):
-        cts_learner = CTSLearner(n_ads=N_ADS, n_slots=publisher.n_slots)
+        print(np.round(e / number_of_experiments * 100), "%")
+        cts_learner = CTSLearner(n_ads=N_ADS, n_slots=publisher.n_slots, t=T)
         for t in range(T):
-            # print(t)
             users = []
             for i in range(N_USERS):
                 user = User(feature1=np.random.binomial(1, 0.5),
@@ -48,25 +48,26 @@ for publisher in publishers:
 
             environment = AdAuctionEnvironment(advertisers, publisher, users, real_q=real_q)
 
-            # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM
-            samples = np.zeros(shape=(N_ADS, N_SLOTS))
-            for i in range(N_ADS):
-                for j in range(N_SLOTS):
-                    samples[i][j] = np.random.beta(a=cts_learner.beta_parameters[i][j][0],
-                                                   b=cts_learner.beta_parameters[i][j][1])
-
-            # Then we choose the superarm with maximum sum reward (obtained from publisher)
-            superarm = publisher.allocate_ads(samples)
-
             for user in users:
+                # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM
+                samples = np.zeros(shape=(N_ADS, N_SLOTS))
+                for i in range(N_ADS):
+                    for j in range(N_SLOTS):
+                        samples[i][j] = np.random.beta(a=cts_learner.beta_parameters[i][j][0],
+                                                       b=cts_learner.beta_parameters[i][j][1])
+
+                # Then we choose the superarm with maximum sum reward (obtained from publisher)
+                superarm = publisher.allocate_ads(samples)
                 # 2. PLAY SUPERARM -  i.e. make a ROUND
                 reward = environment.simulate_user_behaviour(user, superarm)
 
                 # 3. UPDATE BETA DISTRIBUTIONS
-                cts_learner.update(superarm, reward)
+                cts_learner.update(superarm, reward, t=t)
 
         # collect results for publisher
-        cts_rewards_per_experiment.append(cts_learner.collected_rewards)
+        avg_rew_per_days = list(map(lambda rews_day: np.average(rews_day or [np.array([0, 0, 0, 0])], axis=0),
+                                    cts_learner.collected_rewards))
+        cts_rewards_per_experiment.append(avg_rew_per_days)
 
     # Plot curve
 
@@ -85,9 +86,7 @@ for publisher in publishers:
     plt.figure(1)
     plt.xlabel("t")
     plt.ylabel("Regret")
-    colors = ['r', 'g', 'b', 'c']
-    for k in range(len(cumsum[0, :])):
-        plt.plot(cumsum[:, k], colors[k])
+    colors = ['c']
     plt.plot(list(map(lambda x: np.sum(x), cumsum)), 'm')
-    plt.legend(["Slot 1", "Slot 2", "Slot 3", "Slot 4", "Total"])
+    plt.legend(["Total"])
     plt.show()
