@@ -127,6 +127,11 @@ for publisher in publishers:
                 # 3. UPDATE BETA DISTRIBUTIONS
                 klass_learner.update(superarm, reward, t=t)
 
+                # Set zero reward for learners except learner for user.klass
+                l_ex_u_k = [x[1] for x in enumerate(learners_by_klass) if x[0] != user.klass]
+                for learner in l_ex_u_k:
+                    learner.collected_rewards[t].append(np.array([0, 0, 0, 0]))
+
         # collect results for publisher
         avg_rew_per_days_aggregate = list(map(lambda rews_day: np.mean(rews_day or [np.array([0, 0, 0, 0])], axis=0),
                                               cts_learner_aggregate.collected_rewards))
@@ -151,9 +156,10 @@ for publisher in publishers:
     cumsum_aggregate = np.cumsum(np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate, axis=0), axis=0)
 
     cumsum_klass = []
+    opt_q_klass = []
     for klass in range(N_KLASSES):
-        opt_q_klass = calculate_opt(real_q_klass[klass], n_slots=N_SLOTS, n_ads=N_ADS)
-        cumsum_klass.append(np.cumsum(np.mean(opt_q_klass - cts_rewards_per_ex_klass[klass], axis=0), axis=0))
+        opt_q_klass.append(calculate_opt(real_q_klass[klass], n_slots=N_SLOTS, n_ads=N_ADS))
+        cumsum_klass.append(np.cumsum(np.mean(opt_q_klass[klass] - cts_rewards_per_ex_klass[klass], axis=0), axis=0))
 
     plt.figure(1)
     plt.xlabel("t")
