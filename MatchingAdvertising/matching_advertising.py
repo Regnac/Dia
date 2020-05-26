@@ -60,13 +60,13 @@ def samples_from_learner(cts_learner, n_ads, n_slots):
 # T - Time horizon - number of days
 T = 365
 
-number_of_experiments = 10
+number_of_experiments = 40
 
 # number of advertisers for each publisher
 
 N_ADS = 4
 N_SLOTS = 4
-N_USERS = 10  # number of users for each day
+N_USERS = 5  # number of users for each day
 N_KLASSES = 3
 
 publisher1 = Publisher(n_slots=4)
@@ -127,52 +127,39 @@ for publisher in publishers:
                 # 3. UPDATE BETA DISTRIBUTIONS
                 klass_learner.update(superarm, reward, t=t)
 
-                # Set zero reward for learners except learner for user.klass
-                l_ex_u_k = [x[1] for x in enumerate(learners_by_klass) if x[0] != user.klass]
-                for learner in l_ex_u_k:
-                    learner.collected_rewards[t].append(np.array([0, 0, 0, 0]))
-
         # collect results for publisher
-        avg_rew_per_days_aggregate = list(map(lambda rews_day: np.mean(rews_day or [np.array([0, 0, 0, 0])], axis=0),
-                                              cts_learner_aggregate.collected_rewards))
-        cts_rewards_per_experiment_aggregate.append(avg_rew_per_days_aggregate)
+        cts_rewards_per_experiment_aggregate.append(cts_learner_aggregate.collected_rewards)
 
         for klass in range(N_KLASSES):
             collected_rewards = learners_by_klass[klass].collected_rewards
-            avg_rew_per_days = list(
-                map(lambda rews_day: np.mean(rews_day or [np.array([0, 0, 0, 0])], axis=0), collected_rewards))
-            cts_rewards_per_ex_klass[klass].append(avg_rew_per_days)
+            cts_rewards_per_ex_klass[klass].append(collected_rewards)
 
     # Plot curve
-
+    # Prepare data for aggregated model
     cts_rewards_per_experiment_aggregate = np.array(cts_rewards_per_experiment_aggregate)
-    for klass in range(N_KLASSES):
-        rewards = cts_rewards_per_ex_klass[klass]
-        cts_rewards_per_ex_klass[klass] = np.array(rewards)
-
     opt_q_aggregate = calculate_opt(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
-    # print(opt_q_aggregate)
-
     cumsum_aggregate = np.cumsum(np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate, axis=0), axis=0)
 
-    cumsum_klass = []
-    opt_q_klass = []
-    for klass in range(N_KLASSES):
-        opt_q_klass.append(calculate_opt(real_q_klass[klass], n_slots=N_SLOTS, n_ads=N_ADS))
-        cumsum_klass.append(np.cumsum(np.mean(opt_q_klass[klass] - cts_rewards_per_ex_klass[klass], axis=0), axis=0))
+    # Join disaggregated rewards for each experiment and day
+    cts_rewards_per_experiment_disaggregate = np.zeros(shape=np.shape(cts_rewards_per_experiment_aggregate))
+    for ex in range(number_of_experiments):
+        for t in range(T):
+            c = []
+            for klass in range(N_KLASSES):
+                c.append(cts_rewards_per_ex_klass[klass][ex][t])
+
+            cts_rewards_per_experiment_disaggregate[ex][t] = np.sum(np.array(c), axis=0)
+
+    opt_q_klass = list(map(lambda x: calculate_opt(x, n_slots=N_SLOTS, n_ads=N_ADS), real_q_klass))
+    opt_q_disaggregate = np.sum(list(map(lambda x: x[1] * k_p[x[0]], enumerate(opt_q_klass))), axis=0)
+    cumsum_disaggregate = np.cumsum(np.mean(opt_q_disaggregate - cts_rewards_per_experiment_disaggregate, axis=0),
+                                    axis=0)
 
     plt.figure(1)
     plt.xlabel("t")
     plt.ylabel("Reward")
     colors = ['r', 'g', 'b']
     plt.plot(list(map(lambda x: np.sum(x), cumsum_aggregate)), 'm')
-    klass_rewards_per_day = []
-    for klass in range(N_KLASSES):
-        klass_reward_per_day = list(map(lambda x: np.sum(x), cumsum_klass[klass]))
-        klass_rewards_per_day.append(klass_reward_per_day)
-        plt.plot(klass_reward_per_day, colors[klass])
-
-    plt.plot(np.sum(klass_rewards_per_day, axis=0), 'orange')
-
-    plt.legend(["Aggregated", "Klass 1", "Klass 2", "Klass 3", "Disaggregated"])
+    plt.plot(list(map(lambda x: np.sum(x), cumsum_disaggregate)), 'orange')
+    plt.legend(["Aggregated", "Disaggregated"])
     plt.show()
