@@ -18,7 +18,7 @@ number_of_experiments = 100
 
 N_ADS = 4
 N_SLOTS = 4
-N_USERS = 5  # number of users for each day
+N_USERS = 10  # number of users for each day
 real_q = np.random.uniform(size=(N_ADS, N_SLOTS))
 print("Real q")
 print(real_q)
@@ -36,7 +36,7 @@ for publisher in publishers:
         advertisers.append(advertiser)
 
     for e in range(number_of_experiments):
-        print(np.round(e / number_of_experiments * 100), "%")
+        print(np.round(e / number_of_experiments * 10000)/100, "%")
         cts_learner = CTSLearner(n_ads=N_ADS, n_slots=publisher.n_slots, t=T)
         for t in range(T):
             users = []
@@ -65,7 +65,7 @@ for publisher in publishers:
                 cts_learner.update(superarm, reward, t=t)
 
         # collect results for publisher
-        avg_rew_per_days = list(map(lambda rews_day: np.average(rews_day or [np.array([0, 0, 0, 0])], axis=0),
+        avg_rew_per_days = list(map(lambda rews_day: np.mean(rews_day or [np.array([0, 0, 0, 0])], axis=0),
                                     cts_learner.collected_rewards))
         cts_rewards_per_experiment.append(avg_rew_per_days)
 
