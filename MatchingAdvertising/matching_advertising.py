@@ -40,7 +40,6 @@ def generate_users(klasses_proportion, n_users):
         f2 = klasses_features[klass][1]
         user = User(feature1=f1, feature2=f2, klass=klass)
         users.append(user)
-
     np.random.shuffle(users)
     return users
 
@@ -111,7 +110,7 @@ for publisher in publishers:
                 # ############ aggregate Learner 
                 # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM
                 samples_aggregate = samples_from_learner(cts_learner_aggregate, N_ADS, N_SLOTS)
-                superarm_aggregate = publisher.allocate_ads(samples_aggregate, advertisers)
+                superarm_aggregate = publisher.allocate_ads(samples_aggregate, advertisers,real_q_aggregate)
                 # 2. PLAY SUPERARM -  i.e. make a ROUND
                 reward_aggregate = environment.simulate_user_behaviour_as_aggregate(user, superarm_aggregate)
                 # 3. UPDATE BETA DISTRIBUTIONS
@@ -121,7 +120,7 @@ for publisher in publishers:
                 # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM
                 klass_learner = learners_by_klass[user.klass]
                 klass_samples = samples_from_learner(klass_learner, N_ADS, N_SLOTS)
-                superarm = publisher.allocate_ads(klass_samples, advertisers)
+                superarm = publisher.allocate_ads(klass_samples, advertisers,real_q_aggregate)
                 # 2. PLAY SUPERARM -  i.e. make a ROUND
                 reward = environment.simulate_user_behaviour(user, superarm)
                 # 3. UPDATE BETA DISTRIBUTIONS
@@ -151,7 +150,9 @@ for publisher in publishers:
             cts_rewards_per_experiment_disaggregate[ex][t] = np.sum(np.array(c), axis=0)
 
     opt_q_klass = list(map(lambda x: calculate_opt(x, n_slots=N_SLOTS, n_ads=N_ADS), real_q_klass))
+    
     opt_q_disaggregate = np.sum(list(map(lambda x: x[1] * k_p[x[0]], enumerate(opt_q_klass))), axis=0)
+
     cumsum_disaggregate = np.cumsum(np.mean(opt_q_disaggregate - cts_rewards_per_experiment_disaggregate, axis=0),axis=0)
     cumsum_disaggregate2 = (np.mean(opt_q_disaggregate - cts_rewards_per_experiment_disaggregate, axis=0))
     cumsum_aggregate2 = (np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate, axis=0))
