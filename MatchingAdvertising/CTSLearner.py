@@ -41,3 +41,9 @@ class CTSLearner:
             self.update_observations(arm, reward[arm_i])
             self.beta_parameters[arm[0], arm[1], 0] += reward[arm_i]
             self.beta_parameters[arm[0], arm[1], 1] += 1 - reward[arm_i]
+
+
+    def update_after_auction(self,  reward, t):
+        self.t += 1
+        self.collected_rewards[t].append(reward)
+

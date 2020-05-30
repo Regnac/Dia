@@ -13,18 +13,18 @@ class VCG_auction():
         ## Advertiser 3 - [Slot1, Slot2, Slot3, Slot4]
         ## Advertiser 4 - [Slot1, Slot2, Slot3, Slot4]
         index_of_winners, value_to_pay = self.auction(advertisers, n_slots)
-        print(q, "not sorted")
-        q = -np.sort(-q)
-        print(q, "sorted")  # the first q of each row will have the higher probability of being clicked
+       # print(q, "not sorted")
+       # q = -np.sort(-q)
+       # print(q, "sorted")  # the first q of each row will have the higher probability of being clicked
         # only the first winner will have the possibility to chose the first slot
         # the secondo winner will choose the second and go on
-        print(index_of_winners, "index of winners")
+      #  print(index_of_winners, "index of winners")
         allocated = []
         i = 0
         for a in index_of_winners:  # the best bidder takes the best slot for him, the second best bidder the secondo best (of his row) etc
             allocated.append(q[a][i])
             i += 1
-        print(allocated, "allocated")
+     #   print(allocated, "allocated")
         return allocated
 
     def auction(self, advertisers, N_SLOTS):  # how the auction is hanled according to vcg

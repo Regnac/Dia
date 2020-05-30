@@ -58,7 +58,7 @@ def samples_from_learner(cts_learner, n_ads, n_slots):
 ################################################
 
 # T - Time horizon - number of days
-T = 100
+T = 10
 
 number_of_experiments = 40
 
@@ -116,9 +116,11 @@ for publisher in publishers:
                 # 2. PLAY SUPERARM -  i.e. make a ROUND
                 q_ij = auction.choosing_the_slot(real_q_aggregate, N_SLOTS, advertisers)
                 reward_aggregate = environment.simulate_user_behaviour_bidding(q_ij)
+                print(reward_aggregate, "REWARD")
 
                 # 3. UPDATE BETA DISTRIBUTIONS
                 #cts_learner_aggregate.update(superarm_aggregate, reward_aggregate, t=t)
+                cts_learner_aggregate.update_after_auction(reward_aggregate, t=t)
 
                 # # ######## learner for klass
                 # # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM
@@ -133,46 +135,48 @@ for publisher in publishers:
         # collect results for publisher
         cts_rewards_per_experiment_aggregate.append(cts_learner_aggregate.collected_rewards)
 
-        for klass in range(N_KLASSES):
-            collected_rewards = learners_by_klass[klass].collected_rewards
-            cts_rewards_per_ex_klass[klass].append(collected_rewards)
+        # for klass in range(N_KLASSES):
+        #     collected_rewards = learners_by_klass[klass].collected_rewards
+        #     cts_rewards_per_ex_klass[klass].append(collected_rewards)
 
     # Plot curve
     # Prepare data for aggregated model
     cts_rewards_per_experiment_aggregate = np.array(cts_rewards_per_experiment_aggregate)
     opt_q_aggregate = calculate_opt(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
+    print(opt_q_aggregate, "OPT")
+    print(cts_rewards_per_experiment_aggregate, "REW")
     cumsum_aggregate = np.cumsum(np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate, axis=0), axis=0)
 
     # Join disaggregated rewards for each experiment and day
-    cts_rewards_per_experiment_disaggregate = np.zeros(shape=np.shape(cts_rewards_per_experiment_aggregate))
-    for ex in range(number_of_experiments):
-        for t in range(T):
-            c = []
-            for klass in range(N_KLASSES):
-                c.append(cts_rewards_per_ex_klass[klass][ex][t])
+    # cts_rewards_per_experiment_disaggregate = np.zeros(shape=np.shape(cts_rewards_per_experiment_aggregate))
+    # for ex in range(number_of_experiments):
+    #     for t in range(T):
+    #         c = []
+    #         for klass in range(N_KLASSES):
+    #             c.append(cts_rewards_per_ex_klass[klass][ex][t])
+    #
+    #         cts_rewards_per_experiment_disaggregate[ex][t] = np.sum(np.array(c), axis=0)
 
-            cts_rewards_per_experiment_disaggregate[ex][t] = np.sum(np.array(c), axis=0)
-
-    opt_q_klass = list(map(lambda x: calculate_opt(x, n_slots=N_SLOTS, n_ads=N_ADS), real_q_klass))
+  #  opt_q_klass = list(map(lambda x: calculate_opt(x, n_slots=N_SLOTS, n_ads=N_ADS), real_q_klass))
     
-    opt_q_disaggregate = np.sum(list(map(lambda x: x[1] * k_p[x[0]], enumerate(opt_q_klass))), axis=0)
+   # opt_q_disaggregate = np.sum(list(map(lambda x: x[1] * k_p[x[0]], enumerate(opt_q_klass))), axis=0)
 
-    cumsum_disaggregate = np.cumsum(np.mean(opt_q_disaggregate - cts_rewards_per_experiment_disaggregate, axis=0),axis=0)
-    cumsum_disaggregate2 = (np.mean(opt_q_disaggregate - cts_rewards_per_experiment_disaggregate, axis=0))
+  #  cumsum_disaggregate = np.cumsum(np.mean(opt_q_disaggregate - cts_rewards_per_experiment_disaggregate, axis=0),axis=0)
+   # cumsum_disaggregate2 = (np.mean(opt_q_disaggregate - cts_rewards_per_experiment_disaggregate, axis=0))
     cumsum_aggregate2 = (np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate, axis=0))
 
 
-    array_dis = (list(map(lambda x: np.sum(x), cumsum_disaggregate2)))
+  #  array_dis = (list(map(lambda x: np.sum(x), cumsum_disaggregate2)))
     array_agg = (list(map(lambda x: np.sum(x), cumsum_aggregate2)))
 
     array_tot = []
     array_sum = []
 
-    for t in range(T):
-        if(t<7):
-            array_tot.append(array_agg[t])
-        if (t>=7):
-            array_tot.append(array_dis[t])  #maybe here is t-7
+    # for t in range(T):
+    #     if(t<7):
+    #         array_tot.append(array_agg[t])
+    #     if (t>=7):
+    #         array_tot.append(array_dis[t])  #maybe here is t-7
 
     array_sum = np.cumsum(array_tot)
 
@@ -185,9 +189,11 @@ for publisher in publishers:
     plt.figure(1)
     plt.xlabel("t")
     plt.ylabel("Reward")
-    colors = ['r', 'g', 'b']
+    #colors = ['r', 'g', 'b']
+    colors = ['r']
     plt.plot(list(map(lambda x: np.sum(x), cumsum_aggregate)), 'm')
-    plt.plot(list(map(lambda x: np.sum(x), cumsum_disaggregate)), 'orange')
+  #  plt.plot(list(map(lambda x: np.sum(x), cumsum_disaggregate)), 'orange')
     plt.plot(array_sum,'r')
-    plt.legend(["Aggregated", "Disaggregated","Contexed"])
+    #plt.legend(["Aggregated", "Disaggregated","Contexed"])
+    plt.legend(["Aggregated"])
     plt.show()

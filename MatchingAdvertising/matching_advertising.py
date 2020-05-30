@@ -57,7 +57,7 @@ def samples_from_learner(cts_learner, n_ads, n_slots):
 ################################################
 
 # T - Time horizon - number of days
-T = 100
+T = 50
 
 number_of_experiments = 40
 
@@ -111,9 +111,9 @@ for publisher in publishers:
                 # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM
                 samples_aggregate = samples_from_learner(cts_learner_aggregate, N_ADS, N_SLOTS)
                 superarm_aggregate = publisher.allocate_ads(samples_aggregate, advertisers,real_q_aggregate)
-                print(superarm_aggregate, "superarm")
                 # 2. PLAY SUPERARM -  i.e. make a ROUND
                 reward_aggregate = environment.simulate_user_behaviour_as_aggregate(user, superarm_aggregate)
+                #print(reward_aggregate)
                 # 3. UPDATE BETA DISTRIBUTIONS
                 cts_learner_aggregate.update(superarm_aggregate, reward_aggregate, t=t)
 
@@ -130,6 +130,7 @@ for publisher in publishers:
         # collect results for publisher
         cts_rewards_per_experiment_aggregate.append(cts_learner_aggregate.collected_rewards)
 
+
         for klass in range(N_KLASSES):
             collected_rewards = learners_by_klass[klass].collected_rewards
             cts_rewards_per_ex_klass[klass].append(collected_rewards)
@@ -137,7 +138,9 @@ for publisher in publishers:
     # Plot curve
     # Prepare data for aggregated model
     cts_rewards_per_experiment_aggregate = np.array(cts_rewards_per_experiment_aggregate)
+    print(cts_rewards_per_experiment_aggregate, "cts_rewards_per_experiment_aggregate")
     opt_q_aggregate = calculate_opt(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
+    print(opt_q_aggregate, "real_opt_aggregate")
     cumsum_aggregate = np.cumsum(np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate, axis=0), axis=0)
 
     # Join disaggregated rewards for each experiment and day
@@ -174,10 +177,10 @@ for publisher in publishers:
     array_sum = np.cumsum(array_tot)
 
 
-    print(array_agg, "AGG")
-    print(array_dis, "DIS")
-    print(array_tot, "TOT")
-    print(array_sum, "SUM")
+    # print(array_agg, "AGG")
+    # print(array_dis, "DIS")
+    # print(array_tot, "TOT")
+    # print(array_sum, "SUM")
 
     plt.figure(1)
     plt.xlabel("t")
