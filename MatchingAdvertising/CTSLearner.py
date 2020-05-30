@@ -33,6 +33,7 @@ class CTSLearner:
         # pull arm
         return
 
+    #cts_learner_aggregate.update(superarm_aggregate, reward_aggregate, t=t)
     def update(self, superarm, reward, t):
         self.t += 1
         self.collected_rewards[t].append(reward)

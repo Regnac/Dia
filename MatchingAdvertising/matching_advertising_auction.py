@@ -2,6 +2,7 @@
 
 from Publisher import *
 from Advertiser import *
+from VCG_auction import *
 from AdAuctionEnvironment import *
 from User import *
 from CTSLearner import *
@@ -73,7 +74,7 @@ publisher1 = Publisher(n_slots=4)
 publishers = [publisher1]
 
 k_p = generate_klasses_proportion(N_KLASSES)
-assert k_p.sum() == 1.0
+#assert k_p.sum() == 1.0
 print("User klasses proportion:")
 print(k_p)
 
@@ -103,28 +104,30 @@ for publisher in publishers:
 
         for t in range(T):
             users = generate_users(k_p, N_USERS)
-            environment = AdAuctionEnvironment(advertisers, publisher, users, real_q=real_q_aggregate,
-                                               real_q_klass=real_q_klass)
+            environment = AdAuctionEnvironment(advertisers, publisher, users, real_q=real_q_aggregate, real_q_klass=real_q_klass)
+            auction = VCG_auction(real_q_aggregate,N_SLOTS, advertisers)
 
             for user in users:
                 # ############ aggregate Learner 
                 # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM
                 samples_aggregate = samples_from_learner(cts_learner_aggregate, N_ADS, N_SLOTS)
                 superarm_aggregate = publisher.allocate_ads(samples_aggregate, advertisers,real_q_aggregate) #######################################
+
                 # 2. PLAY SUPERARM -  i.e. make a ROUND
                 reward_aggregate = environment.simulate_user_behaviour_as_aggregate(user, superarm_aggregate)
+                auction.choosing_the_slot(real_q_aggregate,N_SLOTS,advertisers)
                 # 3. UPDATE BETA DISTRIBUTIONS
-                cts_learner_aggregate.update(superarm_aggregate, reward_aggregate, t=t)
+                #cts_learner_aggregate.update(superarm_aggregate, reward_aggregate, t=t)
 
-                # ######## learner for klass
-                # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM
-                klass_learner = learners_by_klass[user.klass]
-                klass_samples = samples_from_learner(klass_learner, N_ADS, N_SLOTS)
-                superarm = publisher.allocate_ads(klass_samples, advertisers,real_q_aggregate)
-                # 2. PLAY SUPERARM -  i.e. make a ROUND
-                reward = environment.simulate_user_behaviour(user, superarm)
-                # 3. UPDATE BETA DISTRIBUTIONS
-                klass_learner.update(superarm, reward, t=t)
+                # # ######## learner for klass
+                # # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM
+                # klass_learner = learners_by_klass[user.klass]
+                # klass_samples = samples_from_learner(klass_learner, N_ADS, N_SLOTS)
+                # superarm = publisher.allocate_ads(klass_samples, advertisers,real_q_aggregate)
+                # # 2. PLAY SUPERARM -  i.e. make a ROUND
+                # reward = environment.simulate_user_behaviour(user, superarm)
+                # # 3. UPDATE BETA DISTRIBUTIONS
+                # klass_learner.update(superarm, reward, t=t)
 
         # collect results for publisher
         cts_rewards_per_experiment_aggregate.append(cts_learner_aggregate.collected_rewards)

@@ -92,8 +92,6 @@ for publisher in publishers:
         advertiser = Advertiser(bid=1, publisher=publisher, budget=np.random.uniform(1,100))
         advertisers.append(advertiser)
 
-
-
     for e in range(number_of_experiments):
         print(np.round((e + 1) / number_of_experiments * 10000) / 100, "%")
         cts_learner_aggregate = CTSLearner(n_ads=N_ADS, n_slots=publisher.n_slots, t=T)
@@ -113,6 +111,7 @@ for publisher in publishers:
                 # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM
                 samples_aggregate = samples_from_learner(cts_learner_aggregate, N_ADS, N_SLOTS)
                 superarm_aggregate = publisher.allocate_ads(samples_aggregate, advertisers,real_q_aggregate)
+                print(superarm_aggregate, "superarm")
                 # 2. PLAY SUPERARM -  i.e. make a ROUND
                 reward_aggregate = environment.simulate_user_behaviour_as_aggregate(user, superarm_aggregate)
                 # 3. UPDATE BETA DISTRIBUTIONS

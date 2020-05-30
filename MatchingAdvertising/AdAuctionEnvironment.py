@@ -2,6 +2,7 @@ from Environment import *
 
 
 class AdAuctionEnvironment(Environment):
+    #AdAuctionEnvironment(advertisers, publisher, users, real_q=real_q_aggregate, real_q_klass=real_q_klass)
     def __init__(self, advertisers, publisher, users, real_q, real_q_klass):
         self.advertisers = advertisers
         self.publisher = publisher
