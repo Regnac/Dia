@@ -111,11 +111,12 @@ for publisher in publishers:
                 # ############ aggregate Learner 
                 # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM
                 samples_aggregate = samples_from_learner(cts_learner_aggregate, N_ADS, N_SLOTS)
-                superarm_aggregate = publisher.allocate_ads(samples_aggregate, advertisers,real_q_aggregate) #######################################
+                #superarm_aggregate = publisher.allocate_ads(samples_aggregate, advertisers,real_q_aggregate) #######################################
 
                 # 2. PLAY SUPERARM -  i.e. make a ROUND
-                reward_aggregate = environment.simulate_user_behaviour_as_aggregate(user, superarm_aggregate)
-                auction.choosing_the_slot(real_q_aggregate,N_SLOTS,advertisers)
+                q_ij = auction.choosing_the_slot(real_q_aggregate, N_SLOTS, advertisers)
+                reward_aggregate = environment.simulate_user_behaviour_bidding(q_ij)
+
                 # 3. UPDATE BETA DISTRIBUTIONS
                 #cts_learner_aggregate.update(superarm_aggregate, reward_aggregate, t=t)
 
@@ -176,10 +177,10 @@ for publisher in publishers:
     array_sum = np.cumsum(array_tot)
 
 
-    print(array_agg, "AGG")
-    print(array_dis, "DIS")
-    print(array_tot, "TOT")
-    print(array_sum, "SUM")
+    # print(array_agg, "AGG")
+    # print(array_dis, "DIS")
+    # print(array_tot, "TOT")
+    # print(array_sum, "SUM")
 
     plt.figure(1)
     plt.xlabel("t")
