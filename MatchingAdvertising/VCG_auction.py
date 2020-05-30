@@ -14,7 +14,7 @@ class VCG_auction():
         ## Advertiser 4 - [Slot1, Slot2, Slot3, Slot4]
         index_of_winners, value_to_pay = self.auction(advertisers, n_slots)
        # print(q, "not sorted")
-       # q = -np.sort(-q)
+        q = -np.sort(-q)
        # print(q, "sorted")  # the first q of each row will have the higher probability of being clicked
         # only the first winner will have the possibility to chose the first slot
         # the secondo winner will choose the second and go on
@@ -30,6 +30,7 @@ class VCG_auction():
     def auction(self, advertisers, N_SLOTS):  # how the auction is hanled according to vcg
         index_of_advertiser = []
         bids = self.set_bid(advertisers)
+
         for i in range(len(advertisers)):
             index_of_advertiser.append(i)
         index_of_winners = [index_of_advertiser for _, index_of_advertiser in

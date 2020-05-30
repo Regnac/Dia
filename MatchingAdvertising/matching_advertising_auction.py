@@ -58,7 +58,7 @@ def samples_from_learner(cts_learner, n_ads, n_slots):
 ################################################
 
 # T - Time horizon - number of days
-T = 10
+T = 100
 
 number_of_experiments = 40
 
@@ -122,15 +122,7 @@ for publisher in publishers:
                 #cts_learner_aggregate.update(superarm_aggregate, reward_aggregate, t=t)
                 cts_learner_aggregate.update_after_auction(reward_aggregate, t=t)
 
-                # # ######## learner for klass
-                # # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM
-                # klass_learner = learners_by_klass[user.klass]
-                # klass_samples = samples_from_learner(klass_learner, N_ADS, N_SLOTS)
-                # superarm = publisher.allocate_ads(klass_samples, advertisers,real_q_aggregate)
-                # # 2. PLAY SUPERARM -  i.e. make a ROUND
-                # reward = environment.simulate_user_behaviour(user, superarm)
-                # # 3. UPDATE BETA DISTRIBUTIONS
-                # klass_learner.update(superarm, reward, t=t)
+
 
         # collect results for publisher
         cts_rewards_per_experiment_aggregate.append(cts_learner_aggregate.collected_rewards)
