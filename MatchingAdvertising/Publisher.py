@@ -16,10 +16,14 @@ class Publisher:
 
         for i in range(n_ads):
             for j in range(self.n_slots):
-                  #if(i == 0):
-                   graph_matrix[i][j] = samples[i][j] * advertisers[j].bid  #q_ij * bid_j
-                  #if(i != 0):
-                   #  graph_matrix[i][j] = real_q_aggregate[i][j] * advertisers[j].bid   #WE KNOW Q FOR STOCHASTIC ADVERTISER
+                if(i == 0):
+                    graph_matrix[i][j] = samples[i][j] * advertisers[i].bid  #q_ij * bid_j
+                if(i == 1):
+                    graph_matrix[i][j] = real_q_aggregate[i][j] * advertisers[i].bid   #WE KNOW Q FOR STOCHASTIC ADVERTISER
+                if(i == 2):
+                    graph_matrix[i][j] = real_q_aggregate[i][j] * advertisers[i].bid
+                if(i == 3):
+                    graph_matrix[i][j] = real_q_aggregate[i][j] * advertisers[i].bid  # WE KNOW Q FOR STOCHASTIC ADVERTISER
 
 
         # print("Ads allocating:")

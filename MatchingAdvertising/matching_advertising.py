@@ -35,6 +35,7 @@ def generate_users(klasses_proportion, n_users):
         [1, 0]
     ]
     klasses = np.random.choice([0, 1, 2], n_users, p=klasses_proportion)
+    #klasses = np.random.choice([0], n_users, p=klasses_proportion)
     for klass in klasses:
         f1 = klasses_features[klass][0]
         f2 = klasses_features[klass][1]
@@ -65,7 +66,7 @@ number_of_experiments = 40
 
 N_ADS = 4
 N_SLOTS = 4
-N_USERS = 4  # number of users for each day
+N_USERS = 8  # number of users for each day
 N_KLASSES = 3
 
 publisher1 = Publisher(n_slots=4)
@@ -82,7 +83,7 @@ for klass in range(N_KLASSES):
     real_q_klass.append(np.random.uniform(size=(N_ADS, N_SLOTS)))
 
 real_q_aggregate = np.sum(list(map(lambda x: x[1] * k_p[x[0]], enumerate(real_q_klass))), axis=0)
-
+#real_q_aggregate = real_q_klass[0]
 cts_rewards_per_experiment_aggregate = []
 cts_rewards_per_ex_klass = [[] for i in range(N_KLASSES)]
 
@@ -121,7 +122,7 @@ for publisher in publishers:
                 # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM
                 klass_learner = learners_by_klass[user.klass]
                 klass_samples = samples_from_learner(klass_learner, N_ADS, N_SLOTS)
-                superarm = publisher.allocate_ads(klass_samples, advertisers,real_q_aggregate)
+                superarm = publisher.allocate_ads(klass_samples, advertisers,real_q_klass[user.klass])
                 # 2. PLAY SUPERARM -  i.e. make a ROUND
                 reward = environment.simulate_user_behaviour(user, superarm)
                 # 3. UPDATE BETA DISTRIBUTIONS
@@ -138,9 +139,9 @@ for publisher in publishers:
     # Plot curve
     # Prepare data for aggregated model
     cts_rewards_per_experiment_aggregate = np.array(cts_rewards_per_experiment_aggregate)
-    print(cts_rewards_per_experiment_aggregate, "cts_rewards_per_experiment_aggregate")
+   # print(cts_rewards_per_experiment_aggregate, "cts_rewards_per_experiment_aggregate")
     opt_q_aggregate = calculate_opt(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
-    print(opt_q_aggregate, "real_opt_aggregate")
+    #print(opt_q_aggregate, "real_opt_aggregate")
     cumsum_aggregate = np.cumsum(np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate, axis=0), axis=0)
 
     # Join disaggregated rewards for each experiment and day
@@ -184,7 +185,7 @@ for publisher in publishers:
 
     plt.figure(1)
     plt.xlabel("t")
-    plt.ylabel("Reward")
+    plt.ylabel("Regret")
     colors = ['r', 'g', 'b']
     plt.plot(list(map(lambda x: np.sum(x), cumsum_aggregate)), 'm')
     plt.plot(list(map(lambda x: np.sum(x), cumsum_disaggregate)), 'orange')

@@ -15,6 +15,7 @@ class AdAuctionEnvironment(Environment):
             i = edge[0]  # number of advertiser
             j = edge[1]  # number of slot
             q_ij = self.real_q_klass[user.klass][i][j]  # real probability of click
+
             reward[j] = np.random.binomial(1, q_ij)
         return reward
 
@@ -24,6 +25,7 @@ class AdAuctionEnvironment(Environment):
             i = edge[0]  # number of advertiser
             j = edge[1]  # number of slot
             q_ij = self.real_q[i][j]  # real probability of click
+
             reward[j] = np.random.binomial(1, q_ij)
             #print(reward[j] ,j, "reward")
         return reward

@@ -120,7 +120,7 @@ for publisher in publishers:
 
                 # 3. UPDATE BETA DISTRIBUTIONS
                 #cts_learner_aggregate.update(superarm_aggregate, reward_aggregate, t=t)
-                cts_learner_aggregate.update_after_auction(reward_aggregate, t=t)
+                cts_learner_aggregate.update_after_auction(reward_aggregate, t)
 
 
 
@@ -180,7 +180,7 @@ for publisher in publishers:
 
     plt.figure(1)
     plt.xlabel("t")
-    plt.ylabel("Reward")
+    plt.ylabel("Regret")
     #colors = ['r', 'g', 'b']
     colors = ['r']
     plt.plot(list(map(lambda x: np.sum(x), cumsum_aggregate)), 'm')
