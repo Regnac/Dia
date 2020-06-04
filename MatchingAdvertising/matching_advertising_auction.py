@@ -69,7 +69,7 @@ N_SLOTS = 4
 N_USERS = 4  # number of users for each day
 N_KLASSES = 3
 
-SLOTS_QUALITY = -np.sort(-np.random.randint(1, 20, size=(4)))
+SLOTS_QUALITY = -np.sort(-np.random.choice(range(20), 4, replace=False))
 
 publisher1 = Publisher(n_slots=4)
 

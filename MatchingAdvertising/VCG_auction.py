@@ -36,7 +36,8 @@ class VCG_auction():
         lambdaeff = [1, 0.8, 0.5, 0.3]
         for i in range(self.N_SLOTS):
             for j in range(len(slots_q)):
-                bids[i][j] = advertisers[i].bid * slots_q[j] * lambdaeff[i]
+                #bids[i][j] = advertisers[i].bid * slots_q[j] * lambdaeff[i]
+                bids[i][j] = advertisers[i].bid * slots_q[j]
 
         print(bids)
 
