@@ -27,8 +27,9 @@ class VCG_auction():
      #   print(allocated, "allocated")
         return allocated
 
-    def auction(self, advertisers, N_SLOTS):  # how the auction is hanled according to vcg
+    def auction(self, advertisers):  # how the auction is hanled according to vcg
         index_of_advertiser = []
+
         bids = [[70,56,21,7],[50,40,15,5],[10,8,3,1],[80,64,24,8]]
 
 
@@ -37,47 +38,42 @@ class VCG_auction():
         index_of_winners = [index_of_advertiser for _, index_of_advertiser in
                             sorted(zip(bids, index_of_advertiser), key=lambda pair: pair[0])]
         # ordering the array of the advertisers accorngly to their bid
-        index_of_winners = index_of_winners[:N_SLOTS]  # take the first N winners
+        index_of_winners = index_of_winners[:self.N_SLOTS]  # take the first N winners
         bids[::-1].sort()  # sort the array of the bids in decscengin order
         # print(bids)
 
-        paying = self.value_to_pay(bids, index_of_winners[::-1])
+        paying = self.value_to_pay(bids, index_of_winners[::-1],self.N_SLOTS)
         # the code up is suppose to have nslots but it gives index out of range since we are not using enough advertisers
         return index_of_winners
 
 
-    def value_to_pay(self, bids, index_of_winners):
+    def value_to_pay(self, bids, index_of_winners,N_SLOTS):
         ## Advertiser 1 - [Bids for Slot1,Bids for Slot2,Bids for Slot3,Bids for Slot4]
         ## Advertiser 2 - [Bids for Slot1,Bids for Slot2,Bids for Slot3,Bids for Slot4]
         ## Advertiser 3 - [Bids for Slot1,Bids for Slot2,Bids for Slot3,Bids for Slot4]
         ## Advertiser 4 - [Bids for Slot1,Bids for Slot2,Bids for Slot3,Bids for Slot4]
         #etc
         pay = []
-        bids2 = [[[] for j in range(4)] for i in range(4)]
+        bids2 = np.array([[70,56,21,7],[80,64,24,8], [50,40,15,5], [10,8,3,1]])
 
         print(index_of_winners)
 
-        for i in range(4):
+        for i in range(N_SLOTS):
             bids2[i] = (bids[index_of_winners[i]])
 
-        print(self.value_single_ad(0,0,bids2))
+        for i in range(N_SLOTS):
+            pay.append(self.value_single_ad(i,bids2))
+        print(self.value_single_ad(3,bids2))
+        print(pay)
+        return pay
 
-        return 0
+    def value_single_ad(self, i, bids):
 
-    def value_single_ad(self, i,j, bids):
+        X = np.diagonal(bids[i+1:self.N_SLOTS,:], offset=i)
+        var_Y = np.diagonal(bids[i+1:self.N_SLOTS, i+1:self.N_SLOTS])
+        var = np.sum(X) - np.sum(var_Y)
 
-        Y = []
-        X = np.diagonal(bids[i+1:3,0:3])
-
-        var_Y = np.diagonal(bids[i:3,0:3])
-
-        print(X,"  ",var_Y)
-
-
-
-
-
-        return 0
+        return var
 
 
 
