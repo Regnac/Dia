@@ -7,12 +7,12 @@ class VCG_auction():
         self.N_SLOTS = N_SLOTS
         self.advertisers = advertisers
 
-    def choosing_the_slot(self, q, n_slots, advertisers):
+    def choosing_the_slot(self, q, advertisers,slots_q):
         ## Advertiser 1 - [Slot1, Slot2, Slot3, Slot4]
         ## Advertiser 2 - [Slot1, Slot2, Slot3, Slot4]
         ## Advertiser 3 - [Slot1, Slot2, Slot3, Slot4]
         ## Advertiser 4 - [Slot1, Slot2, Slot3, Slot4]
-        index_of_winners = self.auction(advertisers, n_slots)
+        index_of_winners = self.auction(advertisers,slots_q)
        # print(q, "not sorted")
         q = -np.sort(-q)
        # print(q, "sorted")  # the first q of each row will have the higher probability of being clicked
@@ -27,12 +27,20 @@ class VCG_auction():
      #   print(allocated, "allocated")
         return allocated
 
-    def auction(self, advertisers):  # how the auction is hanled according to vcg
+    def auction(self, advertisers, slots_q):  # how the auction is hanled according to vcg
         index_of_advertiser = []
 
-        bids = [[70,56,21,7],[50,40,15,5],[10,8,3,1],[80,64,24,8]]
+        bids= []
+        for i in range(self.N_SLOTS):
+            bids.append([0, 0, 0, 0])
+        lambdaeff = [1, 0.8, 0.5, 0.3]
+        for i in range(self.N_SLOTS):
+            for j in range(len(slots_q)):
+                bids[i][j] = advertisers[i].bid * slots_q[j] * lambdaeff[i]
 
+        print(bids)
 
+        #bids = [[70, 56, 21, 7], [50, 40, 15, 5], [10, 8, 3, 1], [80, 64, 24, 8]]
         for i in range(len(advertisers)):
             index_of_advertiser.append(i)
         index_of_winners = [index_of_advertiser for _, index_of_advertiser in
@@ -54,13 +62,12 @@ class VCG_auction():
         ## Advertiser 4 - [Bids for Slot1,Bids for Slot2,Bids for Slot3,Bids for Slot4]
         #etc
         pay = []
-        bids2 = np.array([[70,56,21,7],[80,64,24,8], [50,40,15,5], [10,8,3,1]])
-
+        bids2= np.zeros(shape=(4, 4))
         print(index_of_winners)
 
         for i in range(N_SLOTS):
             bids2[i] = (bids[index_of_winners[i]])
-
+        print(bids2)
         for i in range(N_SLOTS):
             pay.append(self.value_single_ad(i,bids2))
         print(self.value_single_ad(3,bids2))
