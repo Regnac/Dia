@@ -58,7 +58,7 @@ def samples_from_learner(cts_learner, n_ads, n_slots):
 ################################################
 
 # T - Time horizon - number of days
-T = 100
+T = 1
 
 number_of_experiments = 40
 
@@ -106,6 +106,7 @@ for publisher in publishers:
             users = generate_users(k_p, N_USERS)
             environment = AdAuctionEnvironment(advertisers, publisher, users, real_q=real_q_aggregate, real_q_klass=real_q_klass)
             auction = VCG_auction(real_q_aggregate,N_SLOTS, advertisers)
+            q_ij = auction.choosing_the_slot(real_q_aggregate, N_SLOTS, advertisers)
 
             for user in users:
                 # ############ aggregate Learner 
@@ -114,9 +115,9 @@ for publisher in publishers:
                 #superarm_aggregate = publisher.allocate_ads(samples_aggregate, advertisers,real_q_aggregate) #######################################
 
                 # 2. PLAY SUPERARM -  i.e. make a ROUND
-                q_ij = auction.choosing_the_slot(real_q_aggregate, N_SLOTS, advertisers)
+
                 reward_aggregate = environment.simulate_user_behaviour_bidding(q_ij)
-                print(reward_aggregate, "REWARD")
+                #print(reward_aggregate, "REWARD")
 
                 # 3. UPDATE BETA DISTRIBUTIONS
                 #cts_learner_aggregate.update(superarm_aggregate, reward_aggregate, t=t)
@@ -135,8 +136,8 @@ for publisher in publishers:
     # Prepare data for aggregated model
     cts_rewards_per_experiment_aggregate = np.array(cts_rewards_per_experiment_aggregate)
     opt_q_aggregate = calculate_opt(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
-    print(opt_q_aggregate, "OPT")
-    print(cts_rewards_per_experiment_aggregate, "REW")
+   # print(opt_q_aggregate, "OPT")
+    #print(cts_rewards_per_experiment_aggregate, "REW")
     cumsum_aggregate = np.cumsum(np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate, axis=0), axis=0)
 
     # Join disaggregated rewards for each experiment and day

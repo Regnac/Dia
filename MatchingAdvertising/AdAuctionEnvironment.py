@@ -36,3 +36,10 @@ class AdAuctionEnvironment(Environment):
             reward[i] = np.random.binomial(1, q_ij[i])
         return reward
 
+    def simulate_user_behaviour_opt(self, q_ij):
+        reward = np.zeros(len(q_ij))
+        for i in range(len(q_ij)):
+            reward += np.random.binomial(1, q_ij[i])
+        return reward
+
+

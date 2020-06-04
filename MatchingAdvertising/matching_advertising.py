@@ -58,16 +58,17 @@ def samples_from_learner(cts_learner, n_ads, n_slots):
 ################################################
 
 # T - Time horizon - number of days
-T = 50
+T = 20
 
-number_of_experiments = 40
+number_of_experiments = 60
 
 # number of advertisers for each publisher
 
 N_ADS = 4
 N_SLOTS = 4
-N_USERS = 8  # number of users for each day
+N_USERS = 10  # number of users for each day
 N_KLASSES = 3
+optimal_agg = 0
 
 publisher1 = Publisher(n_slots=4)
 
@@ -83,9 +84,14 @@ for klass in range(N_KLASSES):
     real_q_klass.append(np.random.uniform(size=(N_ADS, N_SLOTS)))
 
 real_q_aggregate = np.sum(list(map(lambda x: x[1] * k_p[x[0]], enumerate(real_q_klass))), axis=0)
+opt_q_klass = list(map(lambda x: calculate_opt(x, n_slots=N_SLOTS, n_ads=N_ADS), real_q_klass))
+
 #real_q_aggregate = real_q_klass[0]
 cts_rewards_per_experiment_aggregate = []
 cts_rewards_per_ex_klass = [[] for i in range(N_KLASSES)]
+opt_q_aggregate = calculate_opt(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
+opt_q_disaggregate = np.sum(list(map(lambda x: x[1] * k_p[x[0]], enumerate(opt_q_klass))), axis=0)
+
 
 for publisher in publishers:
     advertisers = []
@@ -127,6 +133,7 @@ for publisher in publishers:
                 reward = environment.simulate_user_behaviour(user, superarm)
                 # 3. UPDATE BETA DISTRIBUTIONS
                 klass_learner.update(superarm, reward, t=t)
+                optimal_agg += environment.simulate_user_behaviour_opt(opt_q_aggregate)
 
         # collect results for publisher
         cts_rewards_per_experiment_aggregate.append(cts_learner_aggregate.collected_rewards)
@@ -140,7 +147,7 @@ for publisher in publishers:
     # Prepare data for aggregated model
     cts_rewards_per_experiment_aggregate = np.array(cts_rewards_per_experiment_aggregate)
    # print(cts_rewards_per_experiment_aggregate, "cts_rewards_per_experiment_aggregate")
-    opt_q_aggregate = calculate_opt(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
+
     #print(opt_q_aggregate, "real_opt_aggregate")
     cumsum_aggregate = np.cumsum(np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate, axis=0), axis=0)
 
@@ -154,14 +161,10 @@ for publisher in publishers:
 
             cts_rewards_per_experiment_disaggregate[ex][t] = np.sum(np.array(c), axis=0)
 
-    opt_q_klass = list(map(lambda x: calculate_opt(x, n_slots=N_SLOTS, n_ads=N_ADS), real_q_klass))
-    
-    opt_q_disaggregate = np.sum(list(map(lambda x: x[1] * k_p[x[0]], enumerate(opt_q_klass))), axis=0)
 
     cumsum_disaggregate = np.cumsum(np.mean(opt_q_disaggregate - cts_rewards_per_experiment_disaggregate, axis=0),axis=0)
     cumsum_disaggregate2 = (np.mean(opt_q_disaggregate - cts_rewards_per_experiment_disaggregate, axis=0))
     cumsum_aggregate2 = (np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate, axis=0))
-
 
     array_dis = (list(map(lambda x: np.sum(x), cumsum_disaggregate2)))
     array_agg = (list(map(lambda x: np.sum(x), cumsum_aggregate2)))
@@ -177,7 +180,6 @@ for publisher in publishers:
 
     array_sum = np.cumsum(array_tot)
 
-
     # print(array_agg, "AGG")
     # print(array_dis, "DIS")
     # print(array_tot, "TOT")
@@ -191,4 +193,22 @@ for publisher in publishers:
     plt.plot(list(map(lambda x: np.sum(x), cumsum_disaggregate)), 'orange')
     plt.plot(array_sum,'r')
     plt.legend(["Aggregated", "Disaggregated","Contexed"])
+
+#     plt.figure(2)
+#     plt.xlabel("t")
+#     plt.ylabel("Reward")
+#     colors = ['r', 'g', 'b']
+#     plt.plot(np.cumsum(cts_rewards_per_experiment_aggregate), 'm')
+#     plt.plot(np.cumsum(cts_rewards_per_experiment_disaggregate), 'orange')
+#     plt.legend(["Reward Aggregated", "Reward Disaggregated"])
+#
+#     plt.figure(3)
+#     plt.xlabel("t")
+#     plt.ylabel("opt")
+#     colors = ['r', 'g', 'b']
+#     plt.plot(optimal_agg, 'm')
+# #    plt.plot(opt_q_disaggregate, 'orange')
+#     plt.legend(["Opt Aggregated"])
+
+
     plt.show()
