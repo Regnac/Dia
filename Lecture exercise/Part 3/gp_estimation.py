@@ -34,13 +34,14 @@ for i in range(0, n_obs):
     theta = 1.0
     l = 1.0
     kernel = C(theta, (1e-3, 1e3)) * RBF(1,(1e-3,1e3))  #RBF is the radial basis function, a type of kernel
-    gp = GaussianProcessRegressor(kernel = kernel, alpha=noise_std**2, normalize_y=True, n_restarts_optimizer= 10)
+    gp = GaussianProcessRegressor(kernel = kernel, alpha=noise_std**2,  n_restarts_optimizer= 10)
 
     gp.fit(X,Y)
 
     x_pred = np.atleast_2d(bids).T
     y_pred, sigma = gp.predict(x_pred, return_std= True)
-    plt.figure(1)
+
+    plt.figure(i)
     plt.plot(x_pred, n(x_pred), 'r:', label= r'$n(x)$')
     plt.plot(x_pred, y_pred, 'b-', label=u'Predicted Clicks')
     #Now we plot with the 95% confidence interval
