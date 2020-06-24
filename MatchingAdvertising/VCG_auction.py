@@ -31,7 +31,6 @@ class VCG_auction():
         index_of_advertiser = []
         bids = [[70,56,21,7],[50,40,15,5],[10,8,3,1],[80,64,24,8]]
 
-
         for i in range(len(advertisers)):
             index_of_advertiser.append(i)
         index_of_winners = [index_of_advertiser for _, index_of_advertiser in
@@ -68,14 +67,9 @@ class VCG_auction():
 
         Y = []
         X = np.diagonal(bids[i+1:3,0:3])
-
         var_Y = np.diagonal(bids[i:3,0:3])
 
         print(X,"  ",var_Y)
-
-
-
-
 
         return 0
 
