@@ -69,6 +69,8 @@ N_SLOTS = 4
 N_USERS = 4  # number of users for each day
 N_KLASSES = 3
 
+SLOTS_QUALITY = -np.sort(-np.random.choice(range(20), 4, replace=False))
+
 publisher1 = Publisher(n_slots=4)
 
 publishers = [publisher1]
@@ -90,7 +92,7 @@ cts_rewards_per_ex_klass = [[] for i in range(N_KLASSES)]
 for publisher in publishers:
     advertisers = []
     for i in range(N_ADS):
-        advertiser = Advertiser(bid=1, publisher=publisher, budget=np.random.uniform(1,100))
+        advertiser = Advertiser(bid=np.random.randint(1, 10), publisher=publisher, budget=np.random.uniform(1,100))
         advertisers.append(advertiser)
 
     for e in range(number_of_experiments):
@@ -106,7 +108,7 @@ for publisher in publishers:
             users = generate_users(k_p, N_USERS)
             environment = AdAuctionEnvironment(advertisers, publisher, users, real_q=real_q_aggregate, real_q_klass=real_q_klass)
             auction = VCG_auction(real_q_aggregate,N_SLOTS, advertisers)
-            q_ij = auction.choosing_the_slot(real_q_aggregate, N_SLOTS, advertisers)
+            q_ij = auction.choosing_the_slot(real_q_aggregate, advertisers, SLOTS_QUALITY)
 
             for user in users:
                 # ############ aggregate Learner 
