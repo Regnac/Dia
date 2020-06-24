@@ -30,7 +30,7 @@ for i in range(0, n_obs):
 
     X = np.atleast_2d(x_obs).T
     Y = y_obs.ravel()
-    #
+
     theta = 1.0
     l = 1.0
     kernel = C(theta, (1e-3, 1e3)) * RBF(1,(1e-3,1e3))  #RBF is the radial basis function, a type of kernel
