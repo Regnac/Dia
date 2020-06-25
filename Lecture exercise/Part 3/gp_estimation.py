@@ -3,7 +3,6 @@ from matplotlib import pyplot as plt
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 
-
 def n(x):
     # The real function to estimate (exponential function defined in the slide)
     return  (1.0 - np.exp(-5.0*x)) * 100
@@ -34,7 +33,7 @@ for i in range(0, n_obs):
     theta = 1.0
     l = 1.0
     kernel = C(theta, (1e-3, 1e3)) * RBF(1,(1e-3,1e3))  #RBF is the radial basis function, a type of kernel
-    gp = GaussianProcessRegressor(kernel = kernel, alpha=noise_std**2, normalize_y=True, n_restarts_optimizer= 10)
+    gp = GaussianProcessRegressor(kernel = kernel, alpha=noise_std**2, n_restarts_optimizer= 10)
 
     gp.fit(X,Y)
 

@@ -58,7 +58,7 @@ def samples_from_learner(cts_learner, n_ads, n_slots):
 ################################################
 
 # T - Time horizon - number of days
-T = 1
+T = 100
 
 number_of_experiments = 40
 
@@ -109,6 +109,7 @@ for publisher in publishers:
             environment = AdAuctionEnvironment(advertisers, publisher, users, real_q=real_q_aggregate, real_q_klass=real_q_klass)
             auction = VCG_auction(real_q_aggregate,N_SLOTS, advertisers)
             q_ij = auction.choosing_the_slot(real_q_aggregate, advertisers, SLOTS_QUALITY)
+            #i get in return che qij of the allocated ads in the slots according to the bids/budget
 
             for user in users:
                 # ############ aggregate Learner 

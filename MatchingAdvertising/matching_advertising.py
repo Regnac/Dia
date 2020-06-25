@@ -58,15 +58,15 @@ def samples_from_learner(cts_learner, n_ads, n_slots):
 ################################################
 
 # T - Time horizon - number of days
-T = 20
+T = 30
 
-number_of_experiments = 60
+number_of_experiments = 100
 
 # number of advertisers for each publisher
 
 N_ADS = 4
 N_SLOTS = 4
-N_USERS = 10  # number of users for each day
+N_USERS = 20  # number of users for each day
 N_KLASSES = 3
 optimal_agg = 0
 
