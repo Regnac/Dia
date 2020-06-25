@@ -42,10 +42,12 @@ for i in range(0, n_obs):
     y_pred, sigma = gp.predict(x_pred, return_std= True)
 
     plt.figure(i)
-    plt.plot(x_pred, n(x_pred), 'r:', label= r'$n(x)$')
-    plt.plot(x_pred, y_pred, 'b-', label=u'Predicted Clicks')
-    #Now we plot with the 95% confidence interval
-    plt.fill(np.concatenate([x_pred, x_pred[::-1]]), np.concatenate([y_pred -1.96 * sigma, (y_pred + 1.96* sigma)[::-1]]), alpha = .5, fc='b', ec='None', label = '95% conf interval')
+    plt.plot(x_pred, n(x_pred), 'r', label=r'$n(x)$')
+    plt.plot(X.ravel(), Y, 'ro', label=u'Observed Clicks')
+    plt.plot(x_pred, y_pred, 'b-', label=u'Observed Clicks')
+    plt.fill(np.concatenate([x_pred, x_pred[::-1]]),
+             np.concatenate([y_pred - 1.96 * sigma, (y_pred + 1.96 * sigma)[::-1]]),
+             alpha=.5, fc='b', ec='None', label='95% conf interval')
     plt.xlabel('$x$')
     plt.ylabel('$n(x)$')
     plt.legend(loc='lower right')
