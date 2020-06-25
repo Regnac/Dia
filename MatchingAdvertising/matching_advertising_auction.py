@@ -58,7 +58,7 @@ def samples_from_learner(cts_learner, n_ads, n_slots):
 ################################################
 
 # T - Time horizon - number of days
-T = 1
+T = 2
 
 number_of_experiments = 40
 
