@@ -9,6 +9,7 @@ n_arms = 20
 min_bid = 0.0
 max_bid = 1.0
 bids = np.linspace(min_bid,max_bid, n_arms)
+print("bids ", bids)
 sigma = 10
 
 T = 60
