@@ -2,6 +2,7 @@
 <module type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$/Lecture exercise">
+      <sourceFolder url="file://$MODULE_DIR$/Lecture exercise/Part 3" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/Lecture exercise/venv" />
     </content>
     <content url="file://$MODULE_DIR$/MatchingAdvertising" />
