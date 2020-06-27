@@ -49,4 +49,6 @@ class AdAuctionEnvironment(Environment):
         sigma = 10
         means = fun(bids)
         sigmas = np.ones(len(bids)) * sigma
-        np.random.normal(means[pulled_arm], sigmas[pulled_arm])
+        for arm in superarm:
+            reward += np.random.normal(means[arm], sigmas[arm])
+        return reward
