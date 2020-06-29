@@ -56,9 +56,9 @@ def generate_users(klasses_proportion, n_users):
     return users
 
 
-T = 50
+T = 10
 
-number_of_experiments = 20
+number_of_experiments = 10
 
 # number of advertisers for each publisher
 N_BIDS = 4
@@ -161,7 +161,8 @@ for publisher in publishers:
                 learner_by_subcampaign[i].update(superarm[i], reward_gaussian[i])
 
         # collect results for publisher
-        cts_rewards_per_experiment_aggregate.append(cts_learner_aggregate.collected_rewards)
+
+        cts_rewards_per_experiment_aggregate.append(learner_by_subcampaign[i].collected_rewards)
 
         # for klass in range(N_KLASSES):
         #     collected_rewards = learners_by_klass[klass].collected_rewards
