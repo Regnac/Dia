@@ -1,7 +1,5 @@
 from Environment import *
 
-def fun(x):
-    return 100 * (1.0 - np.exp(-4*x+3*x**3))
 
 class AdAuctionEnvironment(Environment):
     def __init__(self, advertisers, publisher, users, real_q, real_q_klass):
@@ -33,6 +31,11 @@ class AdAuctionEnvironment(Environment):
             #print(reward[j] ,j, "reward")
         return reward
 
+    def simulate_user_behaviour_auction(self, user, q):
+        reward = np.random.binomial(1, q)
+            #print(reward[j] ,j, "reward")
+        return reward
+
     def simulate_user_behaviour_bidding(self, q_ij):
         reward = np.zeros(len(q_ij))
         for i in range(len(q_ij)):
@@ -45,10 +48,3 @@ class AdAuctionEnvironment(Environment):
             reward += np.random.binomial(1, q_ij[i])
         return reward
 
-    def simulate_n_click(self,superarm, bids):
-        sigma = 10
-        means = fun(bids)
-        sigmas = np.ones(len(bids)) * sigma
-        for arm in superarm:
-            reward += np.random.normal(means[arm], sigmas[arm])
-        return reward

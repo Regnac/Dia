@@ -2,17 +2,18 @@ import numpy as np
 
 
 class VCG_auction():
-    def __init__(self, q, N_SLOTS, advertisers):
+    def __init__(self, q, arm, N_SLOTS, advertisers):
         self.q = q
+        self.arm = arm
         self.N_SLOTS = N_SLOTS
         self.advertisers = advertisers
 
-    def choosing_the_slot(self, q, advertisers,slots_q):
+    def choosing_the_slot(self, q, slots_q):
         ## Advertiser 1 - [Slot1, Slot2, Slot3, Slot4]
         ## Advertiser 2 - [Slot1, Slot2, Slot3, Slot4]
         ## Advertiser 3 - [Slot1, Slot2, Slot3, Slot4]
         ## Advertiser 4 - [Slot1, Slot2, Slot3, Slot4]
-        index_of_winners = self.auction(advertisers,slots_q)
+        index_of_winners = self.auction(self.advertisers,slots_q)
        # print(q, "not sorted")
         q = -np.sort(-q)
        # print(q, "sorted")  # the first q of each row will have the higher probability of being clicked
@@ -25,21 +26,24 @@ class VCG_auction():
             allocated.append(q[a][i])
             i += 1
      #   print(allocated, "allocated")
-        print("index of winner ", index_of_winners)
-        print("allocated ", allocated)
-        return allocated
+        print("index of winner (VCG_Auction) ", index_of_winners)
+        print("allocated (VCG_Auction) ", allocated)
+        return index_of_winners, allocated
 
     def auction(self, advertisers, slots_q):  # how the auction is hanled according to vcg
         index_of_advertiser = []
-
+        advbid = [25, 50, 75, 100]
         qv= []
         for i in range(self.N_SLOTS):
             qv.append([0, 0, 0, 0])
         lambdaeff = [1, 0.8, 0.5, 0.3]
         for i in range(self.N_SLOTS):
             for j in range(len(slots_q)):
+                if j == 0:
+                    qv[i][j] = ((self.arm[1] + 1) * 25) * slots_q[j]
+                else:
                 #bids[i][j] = advertisers[i].bid * slots_q[j] * lambdaeff[i]
-                qv[i][j] = advertisers[i].bid * slots_q[j]
+                    qv[i][j] = advbid[np.random.randint(0,3)] * slots_q[j]
 
         print(qv)
 
@@ -52,8 +56,8 @@ class VCG_auction():
         index_of_winners = index_of_winners[:self.N_SLOTS]  # take the first N winners
         qv[::-1].sort()  # sort the array of the bids in decscengin order
         # print(bids)
-
-        paying = self.value_to_pay(qv, index_of_winners[::-1],self.N_SLOTS)
+        #     index_of_winners[i] = int(index_of_winners[i])
+        paying = self.value_to_pay(qv, index_of_winners[::-1],self.N_SLOTS) # VALUE OF PAYPERCLICK
         # the code up is suppose to have nslots but it gives index out of range since we are not using enough advertisers
         return index_of_winners
 

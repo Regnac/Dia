@@ -22,6 +22,8 @@ class GPTS_Learner(Learner):
     def update_model(self):
         x = np.atleast_2d(self.pulled_arms).T
         y = self.collected_rewards
+        print("x", x)
+        print("y", y)
         self.gp.fit(x, y)
         self.means, self.sigmas = self.gp.predict(np.atleast_2d(self.arms).T, return_std=True)
         self.sigmas = np.maximum(self.sigmas, 1e-2)
