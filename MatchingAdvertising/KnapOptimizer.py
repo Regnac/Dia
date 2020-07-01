@@ -25,7 +25,7 @@ class KnapOptimizer():
 
     def Optimize(self, n):
         self.step1n = n
-        print(self.step1n)
+        #print(self.step1n)
         #print("Initial matrix", self.step1n, "\n")
         maxc = np.zeros(shape=(4, 4))
         for i in range(self.n_subcampaign):
@@ -66,6 +66,6 @@ class KnapOptimizer():
 
             superarm[i] = self.result[i], index[0]
             #print("MAXVC", self.step2n)
-        print("INDICE", superarm)
+        #print("INDICE", superarm)
         return superarm
         #print("BIDS OTTIMALI\n",bids)

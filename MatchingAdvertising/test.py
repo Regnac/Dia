@@ -24,6 +24,7 @@ def samples_from_learner(cts_learner, n_ads, n_slots):
 
 def calculate_opt(real_q, n_slots, n_ads):
     opt = hungarian_algorithm(convert_matrix(real_q))
+    #print("CALCULATE OPT", opt)
     m = opt[1]
     opt_q = np.array([])
     for j in range(n_slots):
@@ -32,6 +33,15 @@ def calculate_opt(real_q, n_slots, n_ads):
                 opt_q = np.append(opt_q, real_q[i][j])
     return opt_q
 
+def calculate_opt_advreal(real_q, n_slots, n_ads):
+    opt = hungarian_algorithm(convert_matrix(real_q))
+    #print("CALCULATE OPT", opt)
+    m = opt[1]
+    opt_q = np.array([])
+    for j in range(n_slots):
+        if m[0][j] == 1:
+            opt_q = np.append(opt_q, real_q[0][j])
+    return opt_q
 
 def generate_klasses_proportion(n_klasses):
     p = np.random.randint(100, size=n_klasses) + 20
@@ -56,9 +66,9 @@ def generate_users(klasses_proportion, n_users):
     return users
 
 
-T = 10
+T = 40
 
-number_of_experiments = 10
+number_of_experiments = 5
 
 # number of advertisers for each publisher
 N_BIDS = 4
@@ -67,7 +77,7 @@ N_SUBCAMPAIGN = 4
 N_ARMS = N_BIDS * N_BUDGET
 N_ADS = 4
 N_SLOTS = 4
-N_USERS = 50  # number of users for each day
+N_USERS = 5  # number of users for each day
 N_KLASSES = 3
 N_AUCTION = 20
 bids = np.linspace(start = 25, stop = 100, num = N_BIDS)
@@ -91,6 +101,7 @@ opt_q_klass = list(map(lambda x: calculate_opt(x, n_slots=N_SLOTS, n_ads=N_ADS),
 real_q_aggregate = real_q_klass[0]
 cts_rewards_per_experiment_aggregate = []
 #cts_rewards_per_ex_klass = [[] for i in range(N_KLASSES)]
+opt_q_adv = calculate_opt_advreal(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
 opt_q_aggregate = calculate_opt(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
 opt_q_disaggregate = np.sum(list(map(lambda x: x[1] * k_p[x[0]], enumerate(opt_q_klass))), axis=0)
 
@@ -128,9 +139,9 @@ for publisher in publishers:
             q_adv0 = []
             for i in range(N_SUBCAMPAIGN):
                 sample_n.append(np.reshape(learner_by_subcampaign[i].estimate_n(), (4,4)))
-            print(sample_n)
+            #print(sample_n)
             superarm = knap.Optimize(sample_n) # combination  optimal bid/budget for each subcampaign
-            print("superarm",superarm)
+            #print("superarm",superarm)
             for arm in range(N_SUBCAMPAIGN):
             #for i in range(N_AUCTION): TODO
                 auction = VCG_auction(real_q_aggregate, superarm[arm], N_SLOTS, advertisers)
@@ -148,6 +159,8 @@ for publisher in publishers:
                 #reward_aggregate = Adenvironment.simulate_user_behaviour_auction(user, q)
                 for i in range(N_SUBCAMPAIGN):
                     reward_gaussian[i] += Adenvironment.simulate_user_behaviour_auction(user, q_adv0[i])
+                    learner_by_subcampaign[i].update(superarm[i], reward_gaussian[i],t)
+
                     #print(reward_gaussian)
                     #learner_by_subcampaign[i].update(superarm[i],reward_gaussian)
 
@@ -156,13 +169,13 @@ for publisher in publishers:
                 # 3. UPDATE BETA DISTRIBUTIONS
                 #cts_learner_aggregate.update(superarm, reward_aggregate, t=t)
                 #cts_learner_aggregate.update_after_auction(reward_aggregate, t)
-            print("gaussian reward", reward_gaussian)
-            for i in range(N_SUBCAMPAIGN):
-                learner_by_subcampaign[i].update(superarm[i], reward_gaussian[i])
+            #print("gaussian reward", reward_gaussian)
+            # for i in range(N_SUBCAMPAIGN):
+            #     learner_by_subcampaign[i].update(superarm[i], reward_gaussian[i])
 
         # collect results for publisher
-
-        cts_rewards_per_experiment_aggregate.append(learner_by_subcampaign[i].collected_rewards)
+        for i in range(N_SUBCAMPAIGN):
+            cts_rewards_per_experiment_aggregate.append(learner_by_subcampaign[i].collected_rewards)
 
         # for klass in range(N_KLASSES):
         #     collected_rewards = learners_by_klass[klass].collected_rewards
@@ -171,10 +184,12 @@ for publisher in publishers:
     # Plot curve
     # Prepare data for aggregated model
     cts_rewards_per_experiment_aggregate = np.array(cts_rewards_per_experiment_aggregate)
-    opt_q_aggregate = calculate_opt(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
+    opt_q_aggregate = calculate_opt_advreal(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
+    #print("opt_q", opt_q_aggregate)
+    #print("cts_reward", cts_rewards_per_experiment_aggregate)
     # print(opt_q_aggregate, "OPT")
     # print(cts_rewards_per_experiment_aggregate, "REW")
-    cumsum_aggregate = np.cumsum(np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate, axis=0), axis=0)
+    cumsum_aggregate = np.cumsum(np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate/5, axis=0), axis=0)
 
     # Join disaggregated rewards for each experiment and day
     # cts_rewards_per_experiment_disaggregate = np.zeros(shape=np.shape(cts_rewards_per_experiment_aggregate))

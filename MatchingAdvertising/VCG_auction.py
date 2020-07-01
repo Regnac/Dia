@@ -26,8 +26,8 @@ class VCG_auction():
             allocated.append(q[a][i])
             i += 1
      #   print(allocated, "allocated")
-        print("index of winner (VCG_Auction) ", index_of_winners)
-        print("allocated (VCG_Auction) ", allocated)
+        #print("index of winner (VCG_Auction) ", index_of_winners)
+        #print("allocated (VCG_Auction) ", allocated)
         return index_of_winners, allocated
 
     def auction(self, advertisers, slots_q):  # how the auction is hanled according to vcg
@@ -38,14 +38,15 @@ class VCG_auction():
             qv.append([0, 0, 0, 0])
         lambdaeff = [1, 0.8, 0.5, 0.3]
         for i in range(self.N_SLOTS):
+            bid = advbid[np.random.randint(0,3)]
             for j in range(len(slots_q)):
-                if j == 0:
+                if i == 0:
                     qv[i][j] = ((self.arm[1] + 1) * 25) * slots_q[j]
                 else:
                 #bids[i][j] = advertisers[i].bid * slots_q[j] * lambdaeff[i]
-                    qv[i][j] = advbid[np.random.randint(0,3)] * slots_q[j]
+                    qv[i][j] = bid * slots_q[j]
 
-        print(qv)
+        #print(qv)
 
         #bids = [[70, 56, 21, 7], [50, 40, 15, 5], [10, 8, 3, 1], [80, 64, 24, 8]]
         for i in range(len(advertisers)):
@@ -70,15 +71,15 @@ class VCG_auction():
         #etc
         pay = []
         bids2= np.zeros(shape=(4, 4))
-        print(index_of_winners)
+        #print(index_of_winners)
 
         for i in range(N_SLOTS):
             bids2[i] = (qv[index_of_winners[i]])
-        print(bids2)
+        #print(bids2)
         for i in range(N_SLOTS):
             pay.append(self.value_single_ad(i,bids2))
-        print(self.value_single_ad(3,bids2))
-        print(pay)
+        #print(self.value_single_ad(3,bids2))
+        #print(pay)
         return pay
 
     def value_single_ad(self, i, bids):
