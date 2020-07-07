@@ -29,7 +29,7 @@ class AdvLearner(Learner):
     def update_observation(self, arm_idx, reward,t):
         #self.rewards_per_arm[arm_.append(reward)]
         self.collected_rewardsy = np.append(self.collected_rewardsy, reward)
-        self.collected_rewards[t].append(reward)
+        #self.collected_rewards[t].append(reward)
         value = np.array([(arm_idx[0]+1) *5000.0, (arm_idx[1]+1) *25.0])
         self.pulled_arms.append(value)
         # [3,1]
@@ -49,6 +49,8 @@ class AdvLearner(Learner):
     def estimate_n(self):
         #print(np.random.normal(self.means,self.sigmas))
         return np.random.normal(self.means,self.sigmas)
+    def update_reward(self,reward,t):
+        self.collected_rewards[t].append(reward)
 
 
 

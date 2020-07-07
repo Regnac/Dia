@@ -58,9 +58,9 @@ def samples_from_learner(cts_learner, n_ads, n_slots):
 ################################################
 
 # T - Time horizon - number of days
-T = 30
+T = 100
 
-number_of_experiments = 100
+number_of_experiments = 10
 
 # number of advertisers for each publisher
 
@@ -146,7 +146,7 @@ for publisher in publishers:
     # Plot curve
     # Prepare data for aggregated model
     cts_rewards_per_experiment_aggregate = np.array(cts_rewards_per_experiment_aggregate)
-   # print(cts_rewards_per_experiment_aggregate, "cts_rewards_per_experiment_aggregate")
+    print(cts_rewards_per_experiment_aggregate, "cts_rewards_per_experiment_aggregate")
 
     #print(opt_q_aggregate, "real_opt_aggregate")
     cumsum_aggregate = np.cumsum(np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate, axis=0), axis=0)
