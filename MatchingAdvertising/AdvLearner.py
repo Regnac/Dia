@@ -35,12 +35,6 @@ class AdvLearner(Learner):
         # [3,1]
     def update_model(self,t):
         x =np.atleast_2d(self.pulled_arms)
-        #X = X.T
-        #x = np.atleast_2d(self.pulled_arms).T
-        # y = []
-        # for i in range(t):
-        #     for j in range(len(self.collected_rewards[t])+1):
-        #         y.append(self.collected_rewards[i][j])
         y = self.collected_rewardsy #N click
         self.gp.fit(x, y)
         self.means, self.sigmas = self.gp.predict(np.atleast_2d(self.input), return_std=True)
