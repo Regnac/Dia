@@ -46,16 +46,20 @@ class VCG_auction():
                 else:
                 #bids[i][j] = advertisers[i].bid * slots_q[j] * lambdaeff[i]
                     qv[i][j] = bid * slots_q[j]
-                if(self.advertisers[i].budget <= 0 or self.advertisers[i].d_budget[idx_subcampaign] <= 0):
+                if(advertisers[i].budget <= 0 or advertisers[i].d_budget[idx_subcampaign] <= 0):
                     qv[i][j] = 0
-
+        #print("QV DIOC", qv)
         #bids = [[70, 56, 21, 7], [50, 40, 15, 5], [10, 8, 3, 1], [80, 64, 24, 8]]
         for i in range(len(advertisers)):
             index_of_advertiser.append(i)
+        #print(index_of_advertiser)
         index_of_winners = [index_of_advertiser for _, index_of_advertiser in
                             sorted(zip(qv, index_of_advertiser), key=lambda pair: pair[0])]
         # ordering the array of the advertisers accorngly to their bid
+        #print("index of winner", index_of_winners)
         index_of_winners = index_of_winners[:self.N_SLOTS]  # take the first N winners
+        index_of_winners = index_of_winners[::-1]
+        #print("index of winner2",index_of_winners)
         qv[::-1].sort()  # sort the array of the bids in decscengin order
         # print(bids)
         #     index_of_winners[i] = int(index_of_winners[i])

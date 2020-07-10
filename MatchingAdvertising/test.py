@@ -72,7 +72,15 @@ def update_budget(reward, advertisers, idx_subcampaign):
             advertisers[a].budget -= paying[idx_subcampaign][a]  # TOTAL BUDGET is updated
             advertisers[a].d_budget[idx_subcampaign] -= paying[idx_subcampaign][a]  # daily b
             if(a == 0):
-                print(advertisers[a].d_budget)
+                b1.append(advertisers[a].budget)
+            if (a == 1):
+                b2.append(advertisers[a].budget)
+            if (a == 2):
+                b3.append(advertisers[a].budget)
+            if (a == 3):
+                b4.append(advertisers[a].budget)
+            #if(a == 0):
+                #print(advertisers[a].d_budget)
         #if (a == 0):  # Test
             #print(advertisers[a].budget, "Total budget of", a)
 
@@ -94,12 +102,14 @@ def get_q(res_auction,arm):
     for i in range(N_ADS):
         idx = res_auction[arm][0].index(i)
         q_adv[arm][i] = res_auction[arm][1][idx]
+    #print("res auction ",res_auction[arm][0])
     idx = res_auction[arm][0].index(0)
+    #print("position auction")
     vincitori[idx] += 1
     return q_adv[arm]
     #q_adv0[arm] = res_auction[arm][1][idx]
 
-T = 100
+T = 300
 number_of_experiments = 1
 
 # number of advertisers for each publisher
@@ -109,7 +119,7 @@ N_SUBCAMPAIGN = 4
 N_ARMS = N_BIDS * N_BUDGET
 N_ADS = 4
 N_SLOTS = 4
-N_USERS = 20  # number of users for each day
+N_USERS = 50  # number of users for each day
 N_KLASSES = 3
 N_AUCTION = 20
 bids = np.linspace(start = 25, stop = 100, num = N_BIDS)
@@ -118,8 +128,12 @@ paying = np.zeros(shape=(4,4))
 no_money_d = np.zeros((4, 4), dtype=bool)
 no_money_b = np.zeros((4), dtype=bool)
 
+b1 = []
+b2 = []
+b3 = []
+b4 = []
 
-SLOTS_QUALITY = -np.sort(-np.random.choice(range(10), 4, replace=False))
+SLOTS_QUALITY = -np.sort(-np.random.choice(range(5), 4, replace=False))
 publisher1 = Publisher(n_slots=4)
 
 k_p = generate_klasses_proportion(N_KLASSES)
@@ -149,13 +163,13 @@ vincitori = [0, 0, 0 ,0]
 for publisher in publishers:
     advertisers = []
     for i in range(N_ADS):
-        advertiser = Advertiser(bid=bids[np.random.randint(0,3)], publisher=publisher, budget=np.random.uniform(7500, 10000), d_budget= np.random.uniform(d_budget[np.random.randint(0,3)], size=4 ))
+        advertiser = Advertiser(bid=bids[np.random.randint(0,3)], publisher=publisher, budget=np.random.uniform(20000000, 25000000), d_budget= np.random.uniform(d_budget[np.random.randint(0,3)], size=4 ))
         advertisers.append(advertiser)
 
     for e in range(number_of_experiments):
         total = 0
         for a in range(len(advertisers)):
-            advertisers[a].budget = np.random.uniform(7500, 10000) #at every experiment i set a new budget
+            advertisers[a].budget = np.random.uniform(20000000, 25000000) #at every experiment i set a new budget
 
         print(np.round((e + 1) / number_of_experiments * 10000) / 100, "%")
         cts_learner_aggregate = CTSLearner(n_ads=N_ADS, n_slots=publisher.n_slots, t=T)
@@ -198,11 +212,12 @@ for publisher in publishers:
                 auction = VCG_auction(real_q_aggregate, superarm[arm], N_SLOTS, advertisers)
                 res_auction.append(auction.choosing_the_slot(real_q_aggregate, SLOTS_QUALITY,arm))
                 q_adv[arm]  = get_q(res_auction,arm)
-
+                check_dbudget(advertisers, arm)
 
                 paying[arm] = [x for _,x in sorted(zip(res_auction[arm][0],res_auction[arm][2]))]
                 #print(paying)#how much to pay for pay per click !!!!!!!!!!!
                # print(paying, "PAY")
+            check_budget(advertisers)
 
             for user in users:
 
@@ -216,11 +231,12 @@ for publisher in publishers:
                     check_dbudget(advertisers,j)
                     check_budget(advertisers)
                     reward_gaussian[j] += reward[0]
-                    learner_by_subcampaign[j].update_reward(reward,t)
+                    learner_by_subcampaign[j].update_reward(reward[0],t)
 
             for i in range(N_SUBCAMPAIGN):
                  learner_by_subcampaign[i].update(superarm[i], reward_gaussian[i], t)
-            print("adv0 d", advertisers[0].d_budget)
+            #print("adv0 d", advertisers[0].d_budget)
+            #print("adv b", advertisers[0].budget)
         print("REWARD", learner_by_subcampaign[0].collected_rewards)
         cts_rewards_per_experiment_aggregate.append(learner_by_subcampaign[0].collected_rewards)
         print(vincitori)
@@ -245,9 +261,13 @@ for publisher in publishers:
     plt.ylabel("Regret")
     # colors = ['r', 'g', 'b']
     colors = ['r']
-    plt.plot(list(map(lambda x: np.sum(x), cumsum_aggregate)), 'm')
+    #plt.plot(list(map(lambda x: np.sum(x), cumsum_aggregate)), 'm')
     #  plt.plot(list(map(lambda x: np.sum(x), cumsum_disaggregate)), 'orange')
-    plt.plot(array_sum, 'r')
+    # plt.plot(b1, 'm')
+    # plt.plot(b2, 'r')
+    # plt.plot(b3, 'b')
+    # plt.plot(b4, 'y')
+    plt.plot(learner_by_subcampaign[0].collected_rewardsy, "m")
     # plt.legend(["Aggregated", "Disaggregated","Contexed"])
     plt.legend(["Aggregated"])
     plt.show()
