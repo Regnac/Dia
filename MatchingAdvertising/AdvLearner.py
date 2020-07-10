@@ -2,6 +2,8 @@ from Learner import *
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C,Matern as M
 
+Budget = [2500,5000, 7500, 10000]
+Bid = [25,50,75,100]
 
 class AdvLearner(Learner):
     def __init__(self, n_arms,n_ads,n_bids, n_budget,t):
@@ -15,7 +17,7 @@ class AdvLearner(Learner):
         #kernel = C(1.0, (1e-3, 1e3)) * RBF([5,5], (1e-2, 1e2))
         kernel = C(1.0, (1e-3, 1e3)) * RBF(1.0, (1e-3, 1e3))
         self.gp = GaussianProcessRegressor(kernel=kernel, alpha = alpha **2, n_restarts_optimizer=10)
-        self.input = np.array([[5000, 25],[5000, 50],[5000, 75],[5000, 100],[10000, 25],[10000, 50],[10000, 75],[10000, 100],[20000, 25],[20000, 50],[20000, 75],[20000, 100],[30000, 25],[30000, 50],[30000, 75],[30000, 100]])
+        self.input = np.array([[2500, 25],[2500, 50],[2500, 75],[2500, 100],[5000, 25],[5000, 50],[5000, 75],[5000, 100],[7500, 25],[7500, 50],[7500, 75],[7500, 100],[10000, 25],[10000, 50],[10000, 75],[10000, 100]])
         self.rewards_per_arm = [[[] for j in range(n_bids)] for i in range(n_budget)]
         self.collected_rewards = [[] for j in range(t)]
         self.collected_rewardsy = np.array([])
@@ -30,7 +32,8 @@ class AdvLearner(Learner):
         #self.rewards_per_arm[arm_.append(reward)]
         self.collected_rewardsy = np.append(self.collected_rewardsy, reward)
         #self.collected_rewards[t].append(reward)
-        value = np.array([(arm_idx[0]+1) *5000.0, (arm_idx[1]+1) *25.0])
+        value = np.array([Budget[arm_idx[0]] , Bid[arm_idx[1]]])
+        #print(value)
         self.pulled_arms.append(value)
         # [3,1]
     def update_model(self,t):

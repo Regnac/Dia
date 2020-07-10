@@ -65,6 +65,29 @@ def generate_users(klasses_proportion, n_users):
     np.random.shuffle(users)
     return users
 
+def update_budget(reward, advertisers, idx_subcampaign):
+
+    for a in range(N_ADS):
+        if(reward[a] == 1):
+            #print("QUANTO PAGO DIOCANE  per sub", idx_subcampaign , "ed adv ", a, "prezzo ", paying[idx_subcampaign][a])
+            advertisers[a].budget -= paying[idx_subcampaign][a]  # TOTAL BUDGET is updated
+            advertisers[a].d_budget[idx_subcampaign] -= paying[idx_subcampaign][a]  # daily b
+        #if (a == 0):  # Test
+            #print(advertisers[a].budget, "Total budget of", a)
+
+            #if (advertisers[1].budget <= 0 or advertisers[1].d_budget <= 0):
+            #print("todo")  # TODO   set real_q = 0 so people wont click on that ad !!!!!!!!!!!!!!!!!!!!!!!!
+
+            # print(self.advertisers[a].d_budget, "Daily budget")
+def get_q(res_auction,arm):
+    for i in range(N_ADS):
+        idx = res_auction[arm][0].index(i)
+        q_adv[arm][i] = res_auction[arm][1][idx]
+    if (arm == 0):
+        vincitori[idx] += 1
+    return q_adv[arm]
+    #q_adv0[arm] = res_auction[arm][1][idx]
+
 T = 100
 number_of_experiments = 1
 
@@ -79,7 +102,8 @@ N_USERS = 20  # number of users for each day
 N_KLASSES = 3
 N_AUCTION = 20
 bids = np.linspace(start = 25, stop = 100, num = N_BIDS)
-paying = 0
+d_budget= [2500, 5000, 7500, 10000]
+paying = np.zeros(shape=(4,4))
 no_money = False
 
 SLOTS_QUALITY = -np.sort(-np.random.choice(range(20), 4, replace=False))
@@ -112,13 +136,13 @@ vincitori = [0, 0, 0 ,0]
 for publisher in publishers:
     advertisers = []
     for i in range(N_ADS):
-        advertiser = Advertiser(bid=bids[np.random.randint(0,3)], publisher=publisher, budget=np.random.uniform(5000, 7000), d_budget=np.random.uniform(500, 1000))
+        advertiser = Advertiser(bid=bids[np.random.randint(0,3)], publisher=publisher, budget=np.random.uniform(50000, 70000), d_budget= np.random.uniform(d_budget[np.random.randint(0,3)], size=4 ))
         advertisers.append(advertiser)
 
     for e in range(number_of_experiments):
         total = 0
         for a in range(len(advertisers)):
-            advertisers[a].budget = np.random.uniform(5000, 7000) #at every experiment i set a new budget
+            advertisers[a].budget = np.random.uniform(50000, 70000) #at every experiment i set a new budget
 
         print(np.round((e + 1) / number_of_experiments * 10000) / 100, "%")
         cts_learner_aggregate = CTSLearner(n_ads=N_ADS, n_slots=publisher.n_slots, t=T)
@@ -131,39 +155,46 @@ for publisher in publishers:
 
         for t in range(T):
             print("Day:",t)
-            for a in range(len(advertisers)):
-                advertisers[a].d_budget = np.random.uniform(500, 1000)  # at every day i set a new d_budget
+            for a in range(1, len(advertisers)):
+                advertisers[a].d_budget = np.random.uniform(d_budget[np.random.randint(0,3)], size=4)  # at every day i set a new d_budget
             if(t % 20 == 0):
                 print("day n: ", t)
             users = generate_users(k_p,N_USERS)
             Adenvironment = AdAuctionEnvironment(advertisers, publisher, users, real_q=real_q_aggregate, real_q_klass=real_q_klass)
 
+            ####### INITIALIZE VARIABLE
             sample_n = []
             res_auction = []
             reward_gaussian = [0, 0, 0, 0]
-            q_adv0 = [0, 0, 0, 0]
+            q_adv = np.zeros(shape=(4,4))
+            ####### SAMPLE + OPTIMIZIATION
             for i in range(N_SUBCAMPAIGN):
                 sample_n.append(np.reshape(learner_by_subcampaign[i].estimate_n(), (4,4)))
 
-            superarm = knap.Optimize(sample_n) #combination  optimal bid/budget for each subcampaign
+            superarm = knap.Optimize(sample_n) #combination  optimal budget/bid for each subcampaign
+            #print(superarm)
+            for i in range(N_SUBCAMPAIGN):
+                advertisers[0].d_budget[i] = d_budget[superarm[i][0]]
+            #print(advertisers[0].d_budget)
+            # for i in range(N_SUBCAMPAIGN):
+            #     advertisers[0].d_budget[i] = superarm[i]
 
+            ####### AUCTION
             for arm in range(N_SUBCAMPAIGN):
                 auction = VCG_auction(real_q_aggregate, superarm[arm], N_SLOTS, advertisers)
-                res_auction.append(auction.choosing_the_slot(real_q_aggregate, SLOTS_QUALITY))
-                #print(res_auction)
+                res_auction.append(auction.choosing_the_slot(real_q_aggregate, SLOTS_QUALITY,arm))
+                q_adv[arm]  = get_q(res_auction,arm)
 
-                idx = res_auction[arm][0].index(0)
-                if(arm == 0):
-                    vincitori[idx] += 1
-                q_adv0[arm] = res_auction[arm][1][idx]
 
-                paying = res_auction[arm][2]  #how much to pay for pay per click !!!!!!!!!!!
+                paying[arm] = [x for _,x in sorted(zip(res_auction[arm][0],res_auction[arm][2]))]
+                #print(paying)#how much to pay for pay per click !!!!!!!!!!!
                # print(paying, "PAY")
 
             for user in users:
                 for j in range(N_SUBCAMPAIGN):
-                    reward = Adenvironment.simulate_user_behaviour_auction(user, q_adv0[j], paying, advertisers) #SIMULART |||||||||||||
-                    reward_gaussian[j] += reward
+                    reward = Adenvironment.simulate_user_behaviour_auction(user, q_adv[j], advertisers) #SIMULART |||||||||||||
+                    update_budget(reward, advertisers,j)
+                    reward_gaussian[j] += reward[0]
                     learner_by_subcampaign[j].update_reward(reward,t)
 
             for i in range(N_SUBCAMPAIGN):

@@ -9,12 +9,12 @@ class VCG_auction():
         self.advertisers = advertisers
 
 
-    def choosing_the_slot(self, q, slots_q):
+    def choosing_the_slot(self, q, slots_q,idx_subcampaign):
         ## Advertiser 1 - [Slot1, Slot2, Slot3, Slot4]
         ## Advertiser 2 - [Slot1, Slot2, Slot3, Slot4]
         ## Advertiser 3 - [Slot1, Slot2, Slot3, Slot4]
         ## Advertiser 4 - [Slot1, Slot2, Slot3, Slot4]
-        index_of_winners,paying = self.auction(self.advertisers,slots_q)
+        index_of_winners,paying = self.auction(self.advertisers,slots_q,idx_subcampaign)
        # print(q, "not sorted")
         q = -np.sort(-q)
        # print(q, "sorted")  # the first q of each row will have the higher probability of being clicked
@@ -29,9 +29,10 @@ class VCG_auction():
 
         return index_of_winners, allocated,paying
 
-    def auction(self, advertisers, slots_q):  # how the auction is hanled according to vcg
+    def auction(self, advertisers, slots_q,idx_subcampaign):  # how the auction is hanled according to vcg
         index_of_advertiser = []
         advbid = [25, 50, 75, 100]
+        ourbid = (self.arm[1] + 1) * 25
         qv= []
         for i in range(self.N_SLOTS):
             qv.append([0, 0, 0, 0])
@@ -41,11 +42,11 @@ class VCG_auction():
             for j in range(len(slots_q)):
                 #print(self.advertisers[i].budget, "budget")
                 if i == 0:
-                    qv[i][j] = ((self.arm[1] + 1) * 25) * slots_q[j]
+                    qv[i][j] = ourbid * slots_q[j]
                 else:
                 #bids[i][j] = advertisers[i].bid * slots_q[j] * lambdaeff[i]
                     qv[i][j] = bid * slots_q[j]
-                if(self.advertisers[i].budget <= 0 or self.advertisers[i].d_budget <= 0):
+                if(self.advertisers[i].budget <= 0 or self.advertisers[i].d_budget[idx_subcampaign] <= 0):
                     qv[i][j] = 0
 
         #bids = [[70, 56, 21, 7], [50, 40, 15, 5], [10, 8, 3, 1], [80, 64, 24, 8]]

@@ -32,23 +32,14 @@ class AdAuctionEnvironment(Environment):
             #print(reward[j] ,j, "reward")
         return reward
 
-    def simulate_user_behaviour_auction(self, user, q, paying, advertisers):
-        reward = np.random.binomial(1, q)
+    def simulate_user_behaviour_auction(self, user, q, advertisers):
+        reward = np.zeros(len(advertisers))
+        for i in range(len(advertisers)):
+            reward[i] = np.random.binomial(1, q[i])
+
+        return reward
 
 
-        if (reward == 1):
-            for a in range(len(self.advertisers)):
-
-                advertisers[a].budget -= paying[a]  # TOTAL BUDGET is updated 
-                advertisers[a].d_budget -= paying[a] #daily b
-                if(a == 0): #Test
-                    print(advertisers[a].budget, "Total budget of", a)
-
-                if(advertisers[1].budget <= 0 or advertisers[1].d_budget<= 0):
-                    print("todo") #TODO   set real_q = 0 so people wont click on that ad !!!!!!!!!!!!!!!!!!!!!!!!
-
-
-                #print(self.advertisers[a].d_budget, "Daily budget")
 
         return reward
 
