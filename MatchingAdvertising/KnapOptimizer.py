@@ -24,6 +24,7 @@ class KnapOptimizer():
         # [row,col] subcampaign 4
 
     def Optimize(self, n):
+        #print(self.step1n)
         self.step1n = n
         #print(self.step1n)
         #print("Initial matrix", self.step1n, "\n")

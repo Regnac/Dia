@@ -8,7 +8,7 @@ Bid = [25,50,75,100]
 class AdvLearner(Learner):
     def __init__(self, n_arms,n_ads,n_bids, n_budget,t):
         super().__init__(n_arms)
-        self.arms = np.array([[np.zeros(shape=1) for j in range(n_ads)] for i in range(n_ads)])
+        self.arms = np.array([[np.ones(shape=1) for j in range(n_ads)] for i in range(n_ads)])
         self.means = np.zeros(self.n_arms)
         self.sigmas = np.ones(self.n_arms) * 10
         self.pulled_arms = []
@@ -32,7 +32,7 @@ class AdvLearner(Learner):
         #self.rewards_per_arm[arm_.append(reward)]
         self.collected_rewardsy = np.append(self.collected_rewardsy, reward)
         #self.collected_rewards[t].append(reward)
-        value = np.array([Budget[arm_idx[0]] , Bid[arm_idx[1]]])
+        value = np.array([Budget[arm_idx[0]],Bid[arm_idx[1]]])
         #print(value)
         self.pulled_arms.append(value)
         # [3,1]
