@@ -33,14 +33,15 @@ def calculate_opt(real_q, n_slots, n_ads):
                 opt_q = np.append(opt_q, real_q[i][j])
     return opt_q
 
-def calculate_opt_advreal(real_q, n_slots, n_ads):
-    opt = hungarian_algorithm(convert_matrix(real_q))
-    #print("CALCULATE OPT", opt)
-    m = opt[1]
-    opt_q = np.array([])
-    for j in range(n_slots):
-        if m[0][j] == 1:
-            opt_q = np.append(opt_q, real_q[0][j])
+def calculate_opt_advreal(real_q):
+    # opt = hungarian_algorithm(convert_matrix(real_q))
+    # #print("CALCULATE OPT", opt)
+    # m = opt[1]
+    # opt_q = np.array([])
+    # for j in range(n_slots):
+    #     if m[0][j] == 1:
+    #         opt_q = np.append(opt_q, real_q[0][j])
+    opt_q = np.max(real_q[0])
     return opt_q
 
 def generate_klasses_proportion(n_klasses):
@@ -109,8 +110,8 @@ def get_q(res_auction,arm):
     return q_adv[arm]
     #q_adv0[arm] = res_auction[arm][1][idx]
 
-T = 300
-number_of_experiments = 1
+T = 100
+number_of_experiments = 3
 
 # number of advertisers for each publisher
 N_BIDS = 4
@@ -119,7 +120,7 @@ N_SUBCAMPAIGN = 4
 N_ARMS = N_BIDS * N_BUDGET
 N_ADS = 4
 N_SLOTS = 4
-N_USERS = 50  # number of users for each day
+N_USERS = 20  # number of users for each day
 N_KLASSES = 3
 N_AUCTION = 20
 bids = np.linspace(start = 25, stop = 100, num = N_BIDS)
@@ -149,9 +150,9 @@ real_q_aggregate = np.sum(list(map(lambda x: x[1] * k_p[x[0]], enumerate(real_q_
 opt_q_klass = list(map(lambda x: calculate_opt(x, n_slots=N_SLOTS, n_ads=N_ADS), real_q_klass))
 
 real_q_aggregate = real_q_klass[0]
-cts_rewards_per_experiment_aggregate = []
+cts_rewards_per_experiment_aggregate = [[], [], [], []]
 #cts_rewards_per_ex_klass = [[] for i in range(N_KLASSES)]
-opt_q_adv = calculate_opt_advreal(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
+#opt_q_adv = calculate_opt_advreal(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
 opt_q_aggregate = calculate_opt(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
 opt_q_disaggregate = np.sum(list(map(lambda x: x[1] * k_p[x[0]], enumerate(opt_q_klass))), axis=0)
 
@@ -238,17 +239,20 @@ for publisher in publishers:
             #print("adv0 d", advertisers[0].d_budget)
             #print("adv b", advertisers[0].budget)
         print("REWARD", learner_by_subcampaign[0].collected_rewards)
-        cts_rewards_per_experiment_aggregate.append(learner_by_subcampaign[0].collected_rewards)
+        for i in range(N_SUBCAMPAIGN):
+            cts_rewards_per_experiment_aggregate[i].append(learner_by_subcampaign[i].collected_rewardsy)
         print(vincitori)
 
     print("ADV 0 ", advertisers[0].budget,"ADV 1 ", advertisers[1].budget," ADV 2 ", advertisers[2].budget,"ADV 3 ", advertisers[3].budget)
-    cts_rewards_per_experiment_aggregate = np.array(cts_rewards_per_experiment_aggregate)
-    opt_q_aggregate = 1
+    for i in range(N_SUBCAMPAIGN):
+        cts_rewards_per_experiment_aggregate[i] = np.array(cts_rewards_per_experiment_aggregate[i])
+    opt_q_aggregate = calculate_opt_advreal(real_q_aggregate)
+    cumsum_aggregate = []
+    for i in range(N_SUBCAMPAIGN):
+        cumsum_aggregate.append(np.cumsum(np.mean(opt_q_aggregate - (cts_rewards_per_experiment_aggregate[i]/N_USERS), axis=0),axis=0))
+    #cumsum_aggregate2 = (np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate, axis=0))
 
-    cumsum_aggregate = np.cumsum(np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate, axis=0),axis=0)
-    cumsum_aggregate2 = (np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate, axis=0))
-
-    array_agg = (list(map(lambda x: np.sum(x), cumsum_aggregate2)))
+    #array_agg = (list(map(lambda x: np.sum(x), cumsum_aggregate2)))
 
     array_tot = []
     array_sum = []
@@ -256,18 +260,47 @@ for publisher in publishers:
 
     array_sum = np.cumsum(array_tot)
 
-    plt.figure(1)
-    plt.xlabel("t")
-    plt.ylabel("Regret")
-    # colors = ['r', 'g', 'b']
-    colors = ['r']
-    #plt.plot(list(map(lambda x: np.sum(x), cumsum_aggregate)), 'm')
+
+
+    #plt.plot(list(map(lambda x: np.sum(x), cumsum_aggregate[0])), 'm')
     #  plt.plot(list(map(lambda x: np.sum(x), cumsum_disaggregate)), 'orange')
     # plt.plot(b1, 'm')
     # plt.plot(b2, 'r')
     # plt.plot(b3, 'b')
+    #plt.legend(["Aggregated"])
+    #plt.show()
     # plt.plot(b4, 'y')
-    plt.plot(learner_by_subcampaign[0].collected_rewardsy, "m")
+    plt.figure(1)
+    plt.title("Regret")
+    plt.plot(np.cumsum(opt_q_aggregate-(learner_by_subcampaign[0].collected_rewardsy/N_USERS), axis=0), "m")
+    plt.plot(np.cumsum(opt_q_aggregate-(learner_by_subcampaign[1].collected_rewardsy/N_USERS), axis=0), "g")
+    plt.plot(np.cumsum(opt_q_aggregate-(learner_by_subcampaign[2].collected_rewardsy/N_USERS), axis=0), "b")
+    plt.plot(np.cumsum(opt_q_aggregate-(learner_by_subcampaign[3].collected_rewardsy/N_USERS), axis=0), "y")
+    plt.legend(["Sub1", "Sub2", "Sub3", "Sub4"])
+    plt.figure(2)
+    plt.title("Reward")
+    plt.plot(learner_by_subcampaign[0].collected_rewardsy / N_USERS, "m")
+    plt.plot(learner_by_subcampaign[1].collected_rewardsy / N_USERS, "g")
+    plt.plot(learner_by_subcampaign[2].collected_rewardsy / N_USERS, "b")
+    plt.plot(learner_by_subcampaign[3].collected_rewardsy / N_USERS, "y")
+    #plt.legend(["Sub1", "Sub2", "Sub3", "Sub4"])
+    #plt.plot(learner_by_subcampaign[0].collected_rewardsy, "m")
+    #plt.plot(learner_by_subcampaign[1].collected_rewardsy , "b")
+    #plt.plot(learner_by_subcampaign[2].collected_rewardsy, "g")
+    #plt.plot(learner_by_subcampaign[3].collected_rewardsy, "y")
+    plt.legend(["Sub1", "Sub2","Sub3","Sub4"])
+    plt.figure(3)
+    plt.title("Original REGRET")
+    plt.xlabel("t")
+    plt.ylabel("Regret")
+    # colors = ['r', 'g', 'b']
+    # colors = ['r']
+    plt.plot(cumsum_aggregate[0], 'm')
+    plt.plot(cumsum_aggregate[1], 'g')
+    plt.plot(cumsum_aggregate[2], 'b')
+    plt.plot(cumsum_aggregate[3], 'y')
+    plt.legend(["Sub1", "Sub2", "Sub3", "Sub4"])
+    #plt.plot(np.cumsum(np.mean(N_USERS - learner_by_subcampaign[0].collected_rewardsy, axis=0)), "g")
     # plt.legend(["Aggregated", "Disaggregated","Contexed"])
-    plt.legend(["Aggregated"])
+    #plt.legend(["Aggregated"])
     plt.show()

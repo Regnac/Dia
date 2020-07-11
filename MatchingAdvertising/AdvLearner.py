@@ -12,7 +12,7 @@ class AdvLearner(Learner):
         self.means = np.zeros(self.n_arms)
         self.sigmas = np.ones(self.n_arms) * 10
         self.pulled_arms = []
-        alpha = 10.0
+        alpha = 10
         #kernel =C(1.0, (1e-3, 1e3)) * RBF([2111111111111, 1], (1e-2, 1e2))
         #kernel = C(1.0, (1e-3, 1e3)) * RBF([5,5], (1e-2, 1e2))
         kernel = C(1.0, (1e-3, 1e3)) * RBF(1.0, (1e-3, 1e3))
