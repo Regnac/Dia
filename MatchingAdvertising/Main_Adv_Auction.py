@@ -138,7 +138,7 @@ tot_b = 2500000
 bids = np.linspace(start = 25, stop = 100, num = N_BIDS)
 d_budget= [tot_b/T, tot_b/T, tot_b/T, tot_b/T]
 #our_d_budget = [2500, 5000, 7500, 10000]
-our_d_budget = [tot_b*0,8/T, tot_b*0.9/T, tot_b/T, tot_b*1.1/T]
+our_d_budget = [tot_b*0,9/T, tot_b*0.95/T, tot_b*1.05/T, tot_b*1.1/T]
 paying = np.zeros(shape=(4,4))
 no_money_d = np.zeros((4, 4), dtype=bool)
 no_money_b = np.zeros((4), dtype=bool)
