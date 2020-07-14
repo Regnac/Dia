@@ -142,22 +142,6 @@ for publisher in publishers:
     #print(cts_rewards_per_experiment_aggregate, "REW")
     cumsum_aggregate = np.cumsum(np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate, axis=0), axis=0)
 
-    # Join disaggregated rewards for each experiment and day
-    # cts_rewards_per_experiment_disaggregate = np.zeros(shape=np.shape(cts_rewards_per_experiment_aggregate))
-    # for ex in range(number_of_experiments):
-    #     for t in range(T):
-    #         c = []
-    #         for klass in range(N_KLASSES):
-    #             c.append(cts_rewards_per_ex_klass[klass][ex][t])
-    #
-    #         cts_rewards_per_experiment_disaggregate[ex][t] = np.sum(np.array(c), axis=0)
-
-  #  opt_q_klass = list(map(lambda x: calculate_opt(x, n_slots=N_SLOTS, n_ads=N_ADS), real_q_klass))
-    
-   # opt_q_disaggregate = np.sum(list(map(lambda x: x[1] * k_p[x[0]], enumerate(opt_q_klass))), axis=0)
-
-  #  cumsum_disaggregate = np.cumsum(np.mean(opt_q_disaggregate - cts_rewards_per_experiment_disaggregate, axis=0),axis=0)
-   # cumsum_disaggregate2 = (np.mean(opt_q_disaggregate - cts_rewards_per_experiment_disaggregate, axis=0))
     cumsum_aggregate2 = (np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate, axis=0))
 
 

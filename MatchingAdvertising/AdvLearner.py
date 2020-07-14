@@ -46,6 +46,7 @@ class AdvLearner(Learner):
     def estimate_n(self):
         #print(np.random.normal(self.means,self.sigmas))
         return np.random.normal(self.means,self.sigmas)
+
     def update_reward(self,reward,t):
         self.collected_rewards[t].append(reward)
 

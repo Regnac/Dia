@@ -7,7 +7,7 @@
     </content>
     <content url="file://$MODULE_DIR$/MatchingAdvertising" />
     <content url="file://$MODULE_DIR$/TS-HUNG" />
-    <orderEntry type="jdk" jdkName="Python 3.7 (DeepLearning) (2)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.7" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="TestRunnerService">

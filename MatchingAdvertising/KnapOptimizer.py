@@ -57,6 +57,7 @@ class KnapOptimizer():
         # print("Vettore con gli indici dei massimi di ogni riga della colonna finale\n ", self.result)
         superarm = np.zeros(shape = (4,2), dtype = int)
         bids  = []
+
         for i in range(self.n_subcampaign):
             val = self.step2n[i][self.result[i]] #lo troviamo nella riga i-esima della matrice 2 e nella colonna data dall'indice dei massimi della matrice secondaria
             #print("Valore", val) # valore che ottimizza la subcampain

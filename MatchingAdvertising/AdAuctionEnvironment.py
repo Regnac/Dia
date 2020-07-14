@@ -39,8 +39,6 @@ class AdAuctionEnvironment(Environment):
 
         return reward
 
-
-
         return reward
 
     def simulate_user_behaviour_bidding(self, q_ij):

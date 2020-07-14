@@ -8,7 +8,6 @@ class VCG_auction():
         self.N_SLOTS = N_SLOTS
         self.advertisers = advertisers
 
-
     def choosing_the_slot(self, q, slots_q,idx_subcampaign):
         ## Advertiser 1 - [Slot1, Slot2, Slot3, Slot4]
         ## Advertiser 2 - [Slot1, Slot2, Slot3, Slot4]

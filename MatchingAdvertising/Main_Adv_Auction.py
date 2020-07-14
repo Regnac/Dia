@@ -70,8 +70,19 @@ def update_budget(reward, advertisers, idx_subcampaign):
     for a in range(N_ADS):
         if(reward[a] == 1):
             #print("QUANTO per sub", idx_subcampaign , "ed adv ", a, "prezzo ", paying[idx_subcampaign][a])
-            advertisers[a].budget -= paying[idx_subcampaign][a]  # TOTAL BUDGET is updated
-            advertisers[a].d_budget[idx_subcampaign] -= paying[idx_subcampaign][a]  # daily b
+            #print(advertisers[a].budget , advertisers[a].d_budget )
+            if(advertisers[a].budget > paying[idx_subcampaign][a]):
+                advertisers[a].budget -= paying[idx_subcampaign][a]  # TOTAL BUDGET is updated
+            else:
+                reward[a] == 0
+                #advertisers[a].budget = 0
+
+            if(advertisers[a].d_budget[idx_subcampaign] >paying[idx_subcampaign][a]):
+                advertisers[a].d_budget[idx_subcampaign] -= paying[idx_subcampaign][a]  # daily b
+            else:
+                reward[a] == 0
+                #advertisers[a].d_budget[idx_subcampaign] = 0
+
             if(a == 0):
                 b1.append(advertisers[a].budget)
             if (a == 1):
@@ -110,8 +121,8 @@ def get_q(res_auction,arm):
     return q_adv[arm]
     #q_adv0[arm] = res_auction[arm][1][idx]
 
-T = 100
-number_of_experiments = 3
+T = 200
+number_of_experiments = 1
 
 # number of advertisers for each publisher
 N_BIDS = 4
@@ -123,11 +134,15 @@ N_SLOTS = 4
 N_USERS = 20  # number of users for each day
 N_KLASSES = 3
 N_AUCTION = 20
+tot_b = 2500000
 bids = np.linspace(start = 25, stop = 100, num = N_BIDS)
-d_budget= [2500, 5000, 7500, 10000]
+d_budget= [tot_b/T, tot_b/T, tot_b/T, tot_b/T]
+#our_d_budget = [2500, 5000, 7500, 10000]
+our_d_budget = [tot_b*0,8/T, tot_b*0.9/T, tot_b/T, tot_b*1.1/T]
 paying = np.zeros(shape=(4,4))
 no_money_d = np.zeros((4, 4), dtype=bool)
 no_money_b = np.zeros((4), dtype=bool)
+
 
 b1 = []
 b2 = []
@@ -164,13 +179,14 @@ vincitori = [0, 0, 0 ,0]
 for publisher in publishers:
     advertisers = []
     for i in range(N_ADS):
-        advertiser = Advertiser(bid=bids[np.random.randint(0,3)], publisher=publisher, budget=np.random.uniform(20000000, 25000000), d_budget= np.random.uniform(d_budget[np.random.randint(0,3)], size=4 ))
+        advertiser = Advertiser(bid=bids[np.random.randint(0,3)], publisher=publisher, budget=tot_b, d_budget= np.random.uniform(d_budget[np.random.randint(0,3)], size=4 ))
         advertisers.append(advertiser)
+
 
     for e in range(number_of_experiments):
         total = 0
         for a in range(len(advertisers)):
-            advertisers[a].budget = np.random.uniform(20000000, 25000000) #at every experiment i set a new budget
+            advertisers[a].budget = tot_b #at every experiment i set a new budget
 
         print(np.round((e + 1) / number_of_experiments * 10000) / 100, "%")
         cts_learner_aggregate = CTSLearner(n_ads=N_ADS, n_slots=publisher.n_slots, t=T)
@@ -183,7 +199,7 @@ for publisher in publishers:
         for t in tqdm(range(T)):
             no_money_d = np.zeros((4, 4), dtype=bool)
             #print("Day:",t)
-            for a in range(1, len(advertisers)):
+            for a in range(1, len(advertisers)):  #DAYLI!!!!!!!!!!!!!!!
                 advertisers[a].d_budget = np.random.uniform(d_budget[np.random.randint(0,3)], size=4)  # at every day i set a new d_budget
             #if(t % 20 == 0):
                 #print("day n: ", t)
@@ -202,7 +218,7 @@ for publisher in publishers:
             superarm = knap.Optimize(sample_n) #combination  optimal budget/bid for each subcampaign
             #print(superarm)
             for i in range(N_SUBCAMPAIGN):
-                advertisers[0].d_budget[i] = d_budget[superarm[i][0]]
+                advertisers[0].d_budget[i] = our_d_budget[superarm[i][0]]
 
             #print(advertisers[0].d_budget)
             # for i in range(N_SUBCAMPAIGN):
@@ -256,11 +272,7 @@ for publisher in publishers:
 
     array_tot = []
     array_sum = []
-
-
     array_sum = np.cumsum(array_tot)
-
-
 
     #plt.plot(list(map(lambda x: np.sum(x), cumsum_aggregate[0])), 'm')
     #  plt.plot(list(map(lambda x: np.sum(x), cumsum_disaggregate)), 'orange')
@@ -295,11 +307,12 @@ for publisher in publishers:
     plt.ylabel("Regret")
     # colors = ['r', 'g', 'b']
     # colors = ['r']
-    plt.plot(cumsum_aggregate[0], 'm')
-    plt.plot(cumsum_aggregate[1], 'g')
-    plt.plot(cumsum_aggregate[2], 'b')
-    plt.plot(cumsum_aggregate[3], 'y')
-    plt.legend(["Sub1", "Sub2", "Sub3", "Sub4"])
+    plt.plot(np.mean(cumsum_aggregate,axis=0), 'm')
+    #plt.plot(cumsum_aggregate[1], 'g')
+    #plt.plot(cumsum_aggregate[2], 'b')
+    #plt.plot(cumsum_aggregate[3], 'y')
+
+    plt.legend(["Sub1"])
     #plt.plot(np.cumsum(np.mean(N_USERS - learner_by_subcampaign[0].collected_rewardsy, axis=0)), "g")
     # plt.legend(["Aggregated", "Disaggregated","Contexed"])
     #plt.legend(["Aggregated"])
