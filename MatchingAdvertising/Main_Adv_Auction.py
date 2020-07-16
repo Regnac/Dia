@@ -122,7 +122,7 @@ def get_q(res_auction,arm):
     #q_adv0[arm] = res_auction[arm][1][idx]
 
 T = 200
-number_of_experiments = 1
+number_of_experiments = 5
 
 # number of advertisers for each publisher
 N_BIDS = 4
@@ -133,17 +133,18 @@ N_ADS = 4
 N_SLOTS = 4
 N_USERS = 20  # number of users for each day
 N_KLASSES = 3
-N_AUCTION = 20
+N_AUCTION = 5
 tot_b = 2500000
 bids = np.linspace(start = 25, stop = 100, num = N_BIDS)
-d_budget= [tot_b/T, tot_b/T, tot_b/T, tot_b/T]
+dbud = (tot_b/T) / 4
+d_budget= [dbud *3, dbud *3, dbud *3, dbud *3]
 #our_d_budget = [2500, 5000, 7500, 10000]
-our_d_budget = [tot_b*0,9/T, tot_b*0.95/T, tot_b*1.05/T, tot_b*1.1/T]
+our_d_budget = [dbud, dbud * 2, dbud * 3, dbud * 4]
 paying = np.zeros(shape=(4,4))
 no_money_d = np.zeros((4, 4), dtype=bool)
 no_money_b = np.zeros((4), dtype=bool)
 
-
+print("D_budget", d_budget, "OUR D_BUDGET", our_d_budget)
 b1 = []
 b2 = []
 b3 = []
@@ -192,7 +193,7 @@ for publisher in publishers:
         cts_learner_aggregate = CTSLearner(n_ads=N_ADS, n_slots=publisher.n_slots, t=T)
         learner_by_subcampaign = []
         for subcampaign in range(N_SUBCAMPAIGN):
-            advlearner = AdvLearner(n_arms =N_ARMS,n_ads = N_ADS,n_bids = N_BIDS, n_budget= N_BUDGET, t = T)
+            advlearner = AdvLearner(n_arms =N_ARMS,n_ads = N_ADS,n_bids = N_BIDS, n_budget= N_BUDGET, t = T, bids = bids, D_budget = our_d_budget)
             learner_by_subcampaign.append(advlearner)
 
         knap = KnapOptimizer(n_bids=N_BIDS, n_budget=N_BUDGET, n_subcampaign=4,bids = bids)
@@ -225,35 +226,36 @@ for publisher in publishers:
             #     advertisers[0].d_budget[i] = superarm[i]
 
             ####### AUCTION
-            for arm in range(N_SUBCAMPAIGN):
-                auction = VCG_auction(real_q_aggregate, superarm[arm], N_SLOTS, advertisers)
-                res_auction.append(auction.choosing_the_slot(real_q_aggregate, SLOTS_QUALITY,arm))
-                q_adv[arm]  = get_q(res_auction,arm)
-                check_dbudget(advertisers, arm)
+            for auc in range(N_AUCTION):
+                for arm in range(N_SUBCAMPAIGN):
+                    auction = VCG_auction(real_q_aggregate, superarm[arm], N_SLOTS, advertisers)
+                    res_auction.append(auction.choosing_the_slot(real_q_aggregate, SLOTS_QUALITY,arm))
+                    q_adv[arm] = get_q(res_auction,arm)
+                    check_dbudget(advertisers, arm)
 
-                paying[arm] = [x for _,x in sorted(zip(res_auction[arm][0],res_auction[arm][2]))]
-                #print(paying)#how much to pay for pay per click !!!!!!!!!!!
-               # print(paying, "PAY")
-            check_budget(advertisers)
+                    paying[arm] = [x for _,x in sorted(zip(res_auction[arm][0],res_auction[arm][2]))]
+                    #print(paying)#how much to pay for pay per click !!!!!!!!!!!
+                   # print(paying, "PAY")
+                check_budget(advertisers)
 
-            for user in users:
+                for user in users:
 
-                for j in range(N_SUBCAMPAIGN):
-                    for adv in range(N_ADS):
-                        if(no_money_d[j][adv]):
-                            q_adv[j][adv] = 0
-                            #print("Day: ", t, " Adv: ", adv, "Subcampaign: ", j)
-                    reward = Adenvironment.simulate_user_behaviour_auction(user, q_adv[j], advertisers) #SIMULART |||||||||||||
-                    update_budget(reward, advertisers,j)
-                    check_dbudget(advertisers,j)
-                    check_budget(advertisers)
-                    reward_gaussian[j] += reward[0]
-                    learner_by_subcampaign[j].update_reward(reward[0],t)
+                    for j in range(N_SUBCAMPAIGN):
+                        for adv in range(N_ADS):
+                            if(no_money_d[j][adv]):
+                                q_adv[j][adv] = 0
+                                #print("Day: ", t, " Adv: ", adv, "Subcampaign: ", j)
+                        reward = Adenvironment.simulate_user_behaviour_auction(user, q_adv[j], advertisers) #SIMULART |||||||||||||
+                        update_budget(reward, advertisers,j)
+                        check_dbudget(advertisers,j)
+                        check_budget(advertisers)
+                        reward_gaussian[j] += reward[0]
+                        learner_by_subcampaign[j].update_reward(reward[0],t)
 
             for i in range(N_SUBCAMPAIGN):
-                 learner_by_subcampaign[i].update(superarm[i], reward_gaussian[i], t)
-            #print("adv0 d", advertisers[0].d_budget)
-            #print("adv b", advertisers[0].budget)
+                learner_by_subcampaign[i].update(superarm[i], reward_gaussian[i], t)
+                #print("adv0 d", advertisers[0].d_budget)
+                #print("adv b", advertisers[0].budget)
         print("REWARD", learner_by_subcampaign[0].collected_rewards)
         for i in range(N_SUBCAMPAIGN):
             cts_rewards_per_experiment_aggregate[i].append(learner_by_subcampaign[i].collected_rewardsy)
@@ -265,7 +267,7 @@ for publisher in publishers:
     opt_q_aggregate = calculate_opt_advreal(real_q_aggregate)
     cumsum_aggregate = []
     for i in range(N_SUBCAMPAIGN):
-        cumsum_aggregate.append(np.cumsum(np.mean(opt_q_aggregate - (cts_rewards_per_experiment_aggregate[i]/N_USERS), axis=0),axis=0))
+        cumsum_aggregate.append(np.cumsum(np.mean(opt_q_aggregate - (cts_rewards_per_experiment_aggregate[i]/(N_USERS*N_AUCTION)), axis=0),axis=0))
     #cumsum_aggregate2 = (np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate, axis=0))
 
     #array_agg = (list(map(lambda x: np.sum(x), cumsum_aggregate2)))
@@ -276,18 +278,24 @@ for publisher in publishers:
 
     #plt.plot(list(map(lambda x: np.sum(x), cumsum_aggregate[0])), 'm')
     #  plt.plot(list(map(lambda x: np.sum(x), cumsum_disaggregate)), 'orange')
-    # plt.plot(b1, 'm')
-    # plt.plot(b2, 'r')
-    # plt.plot(b3, 'b')
+    plt.figure(4)
+    plt.title("Budget")
+    plt.xlabel("t")
+    plt.ylabel("Budget")
+    plt.plot(b1, 'm')
+    plt.plot(b2, 'r')
+    plt.plot(b3, 'b')
+    plt.plot(b4, 'y')
     #plt.legend(["Aggregated"])
     #plt.show()
     # plt.plot(b4, 'y')
     plt.figure(1)
     plt.title("Regret")
-    plt.plot(np.cumsum(opt_q_aggregate-(learner_by_subcampaign[0].collected_rewardsy/N_USERS), axis=0), "m")
-    plt.plot(np.cumsum(opt_q_aggregate-(learner_by_subcampaign[1].collected_rewardsy/N_USERS), axis=0), "g")
-    plt.plot(np.cumsum(opt_q_aggregate-(learner_by_subcampaign[2].collected_rewardsy/N_USERS), axis=0), "b")
-    plt.plot(np.cumsum(opt_q_aggregate-(learner_by_subcampaign[3].collected_rewardsy/N_USERS), axis=0), "y")
+    plt.plot(cumsum_aggregate[0], "m")
+    plt.plot(cumsum_aggregate[1], "g")
+    plt.plot(cumsum_aggregate[2], "b")
+    plt.plot(cumsum_aggregate[3], "y")
+
     plt.legend(["Sub1", "Sub2", "Sub3", "Sub4"])
     plt.figure(2)
     plt.title("Reward")
