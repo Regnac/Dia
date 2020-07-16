@@ -9,10 +9,7 @@ class VCG_auction():
         self.advertisers = advertisers
 
     def choosing_the_slot(self, q, slots_q,idx_subcampaign):
-        ## Advertiser 1 - [Slot1, Slot2, Slot3, Slot4]
-        ## Advertiser 2 - [Slot1, Slot2, Slot3, Slot4]
-        ## Advertiser 3 - [Slot1, Slot2, Slot3, Slot4]
-        ## Advertiser 4 - [Slot1, Slot2, Slot3, Slot4]
+
         index_of_winners,paying = self.auction(self.advertisers,slots_q,idx_subcampaign)
        # print(q, "not sorted")
         q = -np.sort(-q)
