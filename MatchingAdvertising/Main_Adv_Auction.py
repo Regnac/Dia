@@ -11,16 +11,10 @@ from BiddingEnvironment import *
 from hungarian_algorithm import hungarian_algorithm, convert_matrix
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 from tqdm import tqdm
 
-def samples_from_learner(cts_learner, n_ads, n_slots):
-    samples = np.zeros(shape=(n_ads, n_slots))
-    for i in range(N_ADS):
-        for j in range(N_SLOTS):
-            a = cts_learner.beta_parameters[i][j][0]
-            b = cts_learner.beta_parameters[i][j][1]
-            samples[i][j] = np.random.beta(a=a, b=b)
-    return samples
+
 
 def calculate_opt(real_q, n_slots, n_ads):
     opt = hungarian_algorithm(convert_matrix(real_q))
@@ -34,13 +28,6 @@ def calculate_opt(real_q, n_slots, n_ads):
     return opt_q
 
 def calculate_opt_advreal(real_q):
-    # opt = hungarian_algorithm(convert_matrix(real_q))
-    # #print("CALCULATE OPT", opt)
-    # m = opt[1]
-    # opt_q = np.array([])
-    # for j in range(n_slots):
-    #     if m[0][j] == 1:
-    #         opt_q = np.append(opt_q, real_q[0][j])
     opt_q = np.max(real_q[0])
     return opt_q
 
@@ -117,9 +104,24 @@ def get_q(res_auction,arm):
     #print("res auction ",res_auction[arm][0])
     idx = res_auction[arm][0].index(0)
     #print("position auction")
-    vincitori[idx] += 1
+    vincitori[arm][idx] += 1
     return q_adv[arm]
     #q_adv0[arm] = res_auction[arm][1][idx]
+
+def print_result():
+    print("-----------RESULT----------\n")
+    row_labels = [dbud, dbud*2, dbud*3, dbud*4]
+    col_labels = [bids[0], bids[1],bids[2], bids[3]]
+    for i in range(N_SUBCAMPAIGN):
+        print("SUBCAMPAIGN ", i+1)
+        df = pd.DataFrame(choice[i], columns=col_labels, index=row_labels)
+        df.astype(int)
+        print(df)
+        print("Number of times in position 1, 2, 3, 4 after auction: ", vincitori[i])
+        print("--------------------------------")
+
+    print("Remaining Budget\nAdvertiser 1: ", advertisers[0].budget," Advertiser 2: ", advertisers[1].budget," Advertiser 3: ", advertisers[2].budget," Advertiser 4: ", advertisers[3].budget)
+
 
 T = 200
 number_of_experiments = 5
@@ -131,9 +133,9 @@ N_SUBCAMPAIGN = 4
 N_ARMS = N_BIDS * N_BUDGET
 N_ADS = 4
 N_SLOTS = 4
-N_USERS = 20  # number of users for each day
+N_USERS = 40  # number of users for each day
 N_KLASSES = 3
-N_AUCTION = 5
+N_AUCTION = 10
 tot_b = 2500000
 bids = np.linspace(start = 25, stop = 100, num = N_BIDS)
 dbud = (tot_b/T) / 4
@@ -144,11 +146,15 @@ paying = np.zeros(shape=(4,4))
 no_money_d = np.zeros((4, 4), dtype=bool)
 no_money_b = np.zeros((4), dtype=bool)
 
+### SUMMARY VARIABLE
 print("D_budget", d_budget, "OUR D_BUDGET", our_d_budget)
 b1 = []
 b2 = []
 b3 = []
 b4 = []
+vincitori = np.zeros(shape=(4,4))
+choice = np.zeros(shape=(4,4,4),dtype=int)
+
 
 SLOTS_QUALITY = -np.sort(-np.random.choice(range(5), 4, replace=False))
 publisher1 = Publisher(n_slots=4)
@@ -175,7 +181,7 @@ opt_q_disaggregate = np.sum(list(map(lambda x: x[1] * k_p[x[0]], enumerate(opt_q
 
 publishers = [publisher1]
 k_p = generate_klasses_proportion(N_KLASSES)
-vincitori = [0, 0, 0 ,0]
+
 
 for publisher in publishers:
     advertisers = []
@@ -189,7 +195,8 @@ for publisher in publishers:
         for a in range(len(advertisers)):
             advertisers[a].budget = tot_b #at every experiment i set a new budget
 
-        print(np.round((e + 1) / number_of_experiments * 10000) / 100, "%")
+        #print(np.round((e + 1) / number_of_experiments * 10000) / 100, "%")
+        print("Experiment ", e+1, "/", number_of_experiments)
         cts_learner_aggregate = CTSLearner(n_ads=N_ADS, n_slots=publisher.n_slots, t=T)
         learner_by_subcampaign = []
         for subcampaign in range(N_SUBCAMPAIGN):
@@ -217,10 +224,11 @@ for publisher in publishers:
                 sample_n.append(np.reshape(learner_by_subcampaign[i].estimate_n(), (4,4)))
 
             superarm = knap.Optimize(sample_n) #combination  optimal budget/bid for each subcampaign
+
             #print(superarm)
             for i in range(N_SUBCAMPAIGN):
                 advertisers[0].d_budget[i] = our_d_budget[superarm[i][0]]
-
+                choice[i][superarm[0][0]][superarm[0][1]] += 1
             #print(advertisers[0].d_budget)
             # for i in range(N_SUBCAMPAIGN):
             #     advertisers[0].d_budget[i] = superarm[i]
@@ -256,12 +264,10 @@ for publisher in publishers:
                 learner_by_subcampaign[i].update(superarm[i], reward_gaussian[i], t)
                 #print("adv0 d", advertisers[0].d_budget)
                 #print("adv b", advertisers[0].budget)
-        print("REWARD", learner_by_subcampaign[0].collected_rewards)
         for i in range(N_SUBCAMPAIGN):
             cts_rewards_per_experiment_aggregate[i].append(learner_by_subcampaign[i].collected_rewardsy)
-        print(vincitori)
 
-    print("ADV 0 ", advertisers[0].budget,"ADV 1 ", advertisers[1].budget," ADV 2 ", advertisers[2].budget,"ADV 3 ", advertisers[3].budget)
+    print_result()
     for i in range(N_SUBCAMPAIGN):
         cts_rewards_per_experiment_aggregate[i] = np.array(cts_rewards_per_experiment_aggregate[i])
     opt_q_aggregate = calculate_opt_advreal(real_q_aggregate)
@@ -278,7 +284,7 @@ for publisher in publishers:
 
     #plt.plot(list(map(lambda x: np.sum(x), cumsum_aggregate[0])), 'm')
     #  plt.plot(list(map(lambda x: np.sum(x), cumsum_disaggregate)), 'orange')
-    plt.figure(4)
+    plt.figure(1)
     plt.title("Budget")
     plt.xlabel("t")
     plt.ylabel("Budget")
@@ -289,7 +295,7 @@ for publisher in publishers:
     #plt.legend(["Aggregated"])
     #plt.show()
     # plt.plot(b4, 'y')
-    plt.figure(1)
+    plt.figure(2)
     plt.title("Regret")
     plt.plot(cumsum_aggregate[0], "m")
     plt.plot(cumsum_aggregate[1], "g")
@@ -297,18 +303,12 @@ for publisher in publishers:
     plt.plot(cumsum_aggregate[3], "y")
 
     plt.legend(["Sub1", "Sub2", "Sub3", "Sub4"])
-    plt.figure(2)
-    plt.title("Reward")
-    plt.plot(learner_by_subcampaign[0].collected_rewardsy / N_USERS, "m")
-    plt.plot(learner_by_subcampaign[1].collected_rewardsy / N_USERS, "g")
-    plt.plot(learner_by_subcampaign[2].collected_rewardsy / N_USERS, "b")
-    plt.plot(learner_by_subcampaign[3].collected_rewardsy / N_USERS, "y")
     #plt.legend(["Sub1", "Sub2", "Sub3", "Sub4"])
     #plt.plot(learner_by_subcampaign[0].collected_rewardsy, "m")
     #plt.plot(learner_by_subcampaign[1].collected_rewardsy , "b")
     #plt.plot(learner_by_subcampaign[2].collected_rewardsy, "g")
     #plt.plot(learner_by_subcampaign[3].collected_rewardsy, "y")
-    plt.legend(["Sub1", "Sub2","Sub3","Sub4"])
+    #plt.legend(["Sub1", "Sub2","Sub3","Sub4"])
     plt.figure(3)
     plt.title("Original REGRET")
     plt.xlabel("t")
@@ -320,7 +320,7 @@ for publisher in publishers:
     #plt.plot(cumsum_aggregate[2], 'b')
     #plt.plot(cumsum_aggregate[3], 'y')
 
-    plt.legend(["Sub1"])
+    plt.legend(["Advertiser 0"])
     #plt.plot(np.cumsum(np.mean(N_USERS - learner_by_subcampaign[0].collected_rewardsy, axis=0)), "g")
     # plt.legend(["Aggregated", "Disaggregated","Contexed"])
     #plt.legend(["Aggregated"])

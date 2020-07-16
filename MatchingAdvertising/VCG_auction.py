@@ -30,7 +30,7 @@ class VCG_auction():
 
     def auction(self, advertisers, slots_q,idx_subcampaign):  # how the auction is hanled according to vcg
         index_of_advertiser = []
-        advbid = [25, 50, 75, 100]
+        advbid = [50,50,50,50]
         ourbid = (self.arm[1] + 1) * 25
         qv= []
         for i in range(self.N_SLOTS):
