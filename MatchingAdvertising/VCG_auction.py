@@ -2,11 +2,12 @@ import numpy as np
 
 
 class VCG_auction():
-    def __init__(self, q, arm, N_SLOTS, advertisers):
+    def __init__(self, q, arm, N_SLOTS, advertisers, minbid):
         self.q = q
         self.arm = arm
         self.N_SLOTS = N_SLOTS
         self.advertisers = advertisers
+        self.minbid = minbid
 
     def choosing_the_slot(self, q, slots_q,idx_subcampaign):
 
@@ -27,24 +28,22 @@ class VCG_auction():
 
     def auction(self, advertisers, slots_q,idx_subcampaign):  # how the auction is hanled according to vcg
         index_of_advertiser = []
-        advbid = [50,50,50,50]
-        ourbid = (self.arm[1] + 1) * 25
+        ourbid = (self.arm[1] + 1) *self.minbid
         qv= []
         for i in range(self.N_SLOTS):
             qv.append([0, 0, 0, 0])
         lambdaeff = [1, 0.8, 0.5, 0.3]
         for i in range(self.N_SLOTS):
-            bid = advbid[np.random.randint(0,3)]
             for j in range(len(slots_q)):
                 #print(self.advertisers[i].budget, "budget")
                 if i == 0:
                     qv[i][j] = ourbid * slots_q[j]
                 else:
                 #bids[i][j] = advertisers[i].bid * slots_q[j] * lambdaeff[i]
-                    qv[i][j] = bid * slots_q[j]
+                    qv[i][j] = advertisers[i].bid * slots_q[j]
                 if(advertisers[i].budget <= 0 or advertisers[i].d_budget[idx_subcampaign] <= 0):
                     qv[i][j] = 0
-        #print("QV DIOC", qv)
+        #print("QV ", qv)
         #bids = [[70, 56, 21, 7], [50, 40, 15, 5], [10, 8, 3, 1], [80, 64, 24, 8]]
         for i in range(len(advertisers)):
             index_of_advertiser.append(i)

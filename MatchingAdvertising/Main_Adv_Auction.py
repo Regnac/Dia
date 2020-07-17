@@ -69,6 +69,9 @@ def update_budget(reward, advertisers, idx_subcampaign):
                 advertisers[a].d_budget[idx_subcampaign] -= paying[idx_subcampaign][a]  # daily b
             else:
                 reward[a] == 0
+                advertisers[a].d_budget[idx_subcampaign] = 0
+                no_money_d[a][idx_subcampaign] = True
+                #no_money_d[a][idx_subcampaign] = True
                 #advertisers[a].d_budget[idx_subcampaign] = 0
             #USED only FOR PLOTTING, we saved the remaining budget over time
             if(a == 0):
@@ -79,7 +82,7 @@ def update_budget(reward, advertisers, idx_subcampaign):
                 b3.append(advertisers[a].budget)
             if (a == 3):
                 b4.append(advertisers[a].budget)
-
+    return reward
 #Function that check the daily budget for every advertiser using a matrix of boolean value
 def check_dbudget(advertisers,idx_sub):
     for a in range(N_ADS):
@@ -122,7 +125,7 @@ def print_result():
 
 #------------PARAMETER SETTING------------#
 T = 200
-number_of_experiments = 5
+number_of_experiments = 1
 
 N_BIDS = 4                  #Number of linspaced Bids
 N_BUDGET = 4                #Number of Daily budget choices
@@ -133,16 +136,22 @@ N_SLOTS = 4
 N_USERS = 30                #Number of users Visiting the site each day
 N_KLASSES = 3               #Classes of user (used only to get the starting q)
 N_AUCTION = 10              #Number of auction per day
-tot_b = 2500000             #Total Budget
-bids = np.linspace(start = 25, stop = 100, num = N_BIDS)
-dbud = (tot_b/T) / 4        #Used only to divide daily budget
-d_budget= [dbud *3, dbud *3, dbud *3, dbud *3]
-our_d_budget = [dbud, dbud * 2, dbud * 3, dbud * 4]
+tot_b = 70000         #Total Budget
+bids = np.linspace(start = 0.25, stop = 1, num = N_BIDS)
+bid_competitor = bids[int(N_BIDS/2)-1]
+dbud = ((tot_b/T) / 4) / N_SUBCAMPAIGN        #Used only to divide daily budget
+d_budget= [dbud *3, dbud *3, dbud *3, dbud *3]          #Daily budget competitor (static)
+our_d_budget = [dbud, dbud * 2, dbud * 3, dbud * 4]     #Our possible choice of daily budget
 
 paying = np.zeros(shape=(4,4))
 no_money_d = np.zeros((4, 4), dtype=bool)
 no_money_b = np.zeros((4), dtype=bool)
+has_finished = np.zeros((4,T), dtype=int)
 #------------PARAMETER SETTING------------#
+
+
+for i in range(20):
+    print("BIDS ", bids[int(N_BIDS/2)-1] + np.random.normal(0.1, 0.5, 1)/20)
 
 
 #------------Summary Variable------------#
@@ -154,7 +163,8 @@ vincitori = np.zeros(shape=(4,4))
 choice = np.zeros(shape=(4,4,4),dtype=int)
 
 #Quality of the slots(used in VCG Auction)
-SLOTS_QUALITY = -np.sort(-np.random.choice(range(5), 4, replace=False))
+SLOTS_QUALITY = np.linspace(start = 1, stop = 0.25, num = N_SLOTS)
+#SLOTS_QUALITY = -np.sort(-np.random.choice(range(5), 4, replace=False))
 
 publisher1 = Publisher(n_slots=4)
 k_p = generate_klasses_proportion(N_KLASSES)
@@ -180,7 +190,7 @@ k_p = generate_klasses_proportion(N_KLASSES)
 for publisher in publishers:
     advertisers = []
     for i in range(N_ADS):
-        advertiser = Advertiser(bid=bids[np.random.randint(0,3)], publisher=publisher, budget=tot_b, d_budget= np.random.uniform(d_budget[np.random.randint(0,3)], size=4 ))
+        advertiser = Advertiser(bid=bid_competitor, publisher=publisher, budget=tot_b, d_budget= np.random.uniform(d_budget[np.random.randint(0,3)], size=4 ))
         advertisers.append(advertiser)
 
 
@@ -207,6 +217,8 @@ for publisher in publishers:
             no_money_d = np.zeros((4, 4), dtype=bool)
             for a in range(1, len(advertisers)):
                 advertisers[a].d_budget = np.random.uniform(d_budget[np.random.randint(0,3)], size=4)  # at every day i set a new d_budget
+                advertisers[a].bid = bids[int(N_BIDS/2)-1] + np.random.normal(0.1, 0.5, 1)/20
+
             users = generate_users(k_p,N_USERS)
             Adenvironment = AdAuctionEnvironment(advertisers, publisher, users, real_q=real_q_aggregate, real_q_klass=real_q_klass)
 
@@ -230,7 +242,7 @@ for publisher in publishers:
             #    For each subcampaign create an run a simulation of an auction
             for auc in range(N_AUCTION):
                 for arm in range(N_SUBCAMPAIGN):
-                    auction = VCG_auction(real_q_aggregate, superarm[arm], N_SLOTS, advertisers)
+                    auction = VCG_auction(real_q_aggregate, superarm[arm], N_SLOTS, advertisers,minbid=bids[0])
                     res_auction.append(auction.choosing_the_slot(real_q_aggregate, SLOTS_QUALITY,arm))
                     q_adv[arm] = get_q(res_auction,arm)
                     check_dbudget(advertisers, arm)
@@ -245,28 +257,29 @@ for publisher in publishers:
                 #    get the reward after a simulation of user behaviour
                 for user in users:
                     for j in range(N_SUBCAMPAIGN):
-                        for adv in range(N_ADS):
-                            if(no_money_d[j][adv]):
-                                q_adv[j][adv] = 0
+
+                        if (not (no_money_d[0][j])):
+                            has_finished[j][t] += 1
 
                         reward = Adenvironment.simulate_user_behaviour_auction(user, q_adv[j], advertisers) #SIMULART |||||||||||||
-                        update_budget(reward, advertisers,j)
-                        check_dbudget(advertisers,j)
-                        check_budget(advertisers)
+                        reward = update_budget(reward, advertisers,j)
+                        #check_dbudget(advertisers,j)
+                        #check_budget(advertisers)
                         reward_gaussian[j] += reward[0]
-                        learner_by_subcampaign[j].update_reward(reward[0],t)
 
             #6. At the end of the Day update the Gaussian process Regressor with the number of click
             for i in range(N_SUBCAMPAIGN):
                 learner_by_subcampaign[i].update(superarm[i], reward_gaussian[i], t)
 
+
         # Accumulate the reward
         for i in range(N_SUBCAMPAIGN):
             cts_rewards_per_experiment_aggregate[i].append(learner_by_subcampaign[i].collected_rewardsy)
 
+
     #After finish the experiment we can print the result and see the choice of learner and the remaining budget
     print_result()
-
+    print("TOTAL STEP: ", (N_USERS * N_AUCTION), "/", has_finished[0])
     for i in range(N_SUBCAMPAIGN):
         cts_rewards_per_experiment_aggregate[i] = np.array(cts_rewards_per_experiment_aggregate[i])
     opt_q_aggregate = calculate_opt_advreal(real_q_aggregate)
