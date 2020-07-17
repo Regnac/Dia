@@ -147,7 +147,7 @@ number_of_experiments = 40
 
 N_ADS = 4
 N_SLOTS = 4
-N_USERS = 5  # number of users for each day
+N_USERS = 10  # number of users for each day
 N_KLASSES = 3
 
 publisher1 = Publisher(n_slots=4)
@@ -303,5 +303,41 @@ for publisher in publishers:
     plt.ylabel("Reward")
     plt.plot(list(map(lambda x: np.sum(x), mean_reward_aggregate)), 'm')
     plt.plot(list(map(lambda x: np.sum(x), mean_reward_disaggregate)), 'orange')
+    plt.legend(["Aggregated", "Disaggregated"])
+    plt.show()
+
+    reward_disaggregate = list(map(lambda x: np.sum(x), mean_reward_disaggregate))
+    reward_aggregate = list(map(lambda x: np.sum(x), mean_reward_aggregate))
+    plt.figure(3)
+    plt.xlabel("t")
+    plt.ylabel("Regret")
+    plt.plot(np.cumsum(np.mean(reward_disaggregate[200:350]) - reward_disaggregate), 'orange')
+    plt.plot(np.cumsum(np.mean(reward_disaggregate[200:350]) - reward_aggregate), 'm')
+    plt.legend(["Disaggregated", "Aggregated"])
+    plt.show()
+
+    smooth_reward_a = []
+    for r_i, r in enumerate(reward_aggregate):
+        if r_i >= 25:
+            smooth_reward_a.append(np.mean(reward_aggregate[r_i - 25:r_i]))
+        else:
+            if r_i >= 5:
+                smooth_reward_a.append(np.mean(reward_aggregate[r_i - 5:r_i]))
+            else:
+                smooth_reward_a.append(r)
+    smooth_reward_d = []
+    for r_i, r in enumerate(reward_disaggregate):
+        if r_i >= 25:
+            smooth_reward_d.append(np.mean(reward_disaggregate[r_i - 25:r_i]))
+        else:
+            if r_i >= 5:
+                smooth_reward_d.append(np.mean(reward_disaggregate[r_i - 5:r_i]))
+            else:
+                smooth_reward_d.append(r)
+    plt.figure(4)
+    plt.xlabel("t")
+    plt.ylabel("Reward")
+    plt.plot(smooth_reward_a, 'm')
+    plt.plot(smooth_reward_d, 'orange')
     plt.legend(["Aggregated", "Disaggregated"])
     plt.show()
