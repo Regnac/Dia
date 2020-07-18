@@ -126,7 +126,7 @@ def print_result():
 #------------PARAMETER SETTING------------#
 
 T = 200
-number_of_experiments = 5
+number_of_experiments = 1
 
 N_BIDS = 4                  #Number of linspaced Bids
 N_BUDGET = 4                #Number of Daily budget choices
@@ -290,7 +290,7 @@ for publisher in publishers:
 
     smooth_reward = []
     reward_aggregate2 = np.mean(reward_aggregate, axis=0)
-    for r_i, r in enumerate(reward_aggregate):
+    for r_i, r in enumerate(reward_aggregate2):
         if r_i >= 25:
             smooth_reward.append(np.mean(reward_aggregate2[r_i - 25:r_i]))
         else:

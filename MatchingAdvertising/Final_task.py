@@ -226,7 +226,7 @@ number_of_experiments = 1
 
 N_ADS = 4
 N_SLOTS = 4
-N_USERS = 10  # number of users for each day
+N_USERS = 30  # number of users for each day
 N_KLASSES = 3
 TIME_SPLIT = 7
 
@@ -352,14 +352,14 @@ for publisher in publishers:
         partition = partitions[0]
         partition_index = 0
         print(partition)
-        for t in range(T):
+        for t in tqdm(range(T)):
             # generate contexts (partition)
             if int(t / TIME_SPLIT) > week:
                 week += 1
                 # choose best partition for new week by collected data
                 partition, partition_index = choose_best_partition(user_data[e], partitions, k_p,
                                                                    prev_p_index=partition_index)
-                print(partition)
+                #print(partition)
 
             user_data[e].append([])
             cts_rewards_per_experiment_disaggregate[e].append([])
@@ -496,7 +496,7 @@ for publisher in publishers:
     ###########################  /////  ########################################
 
 
-
+    print_result()
     # Plot curve
     # Prepare data for aggregated model
     cts_rewards_per_experiment_aggregate = np.array(cts_rewards_per_experiment_aggregate)
