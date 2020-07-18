@@ -13,6 +13,16 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 
 
+from Publisher import *
+from Advertiser import *
+from AdAuctionEnvironment import *
+from User import *
+from CTSLearner import *
+from hungarian_algorithm import hungarian_algorithm, convert_matrix
+import numpy as np
+import matplotlib.pyplot as plt
+
+
 def extract_hungarian_result(initial_matrix, hungarian_matrix):
     m_shape = np.shape(hungarian_matrix)
     result = np.array([])
@@ -171,7 +181,6 @@ def update_budget(reward, advertisers, idx_subcampaign):
                 b4.append(advertisers[a].budget)
     return reward
 
-#Function that check the daily budget for every advertiser using a matrix of boolean value
 def check_dbudget(advertisers,idx_sub):
     for a in range(N_ADS):
         if (advertisers[a].d_budget[idx_sub] <= 0):
@@ -196,7 +205,6 @@ def get_q(res_auction,arm):
     vincitori[arm][idx] += 1    #USED only to see the position that our advertiser get after every auction
     return q_adv[arm]
 
-#Function used to print the result(choice of the advertiser and knapsack) and remaining budget after finish the experiments
 def print_result():
     print("-----------RESULT----------\n")
     row_labels = [dbud, dbud*2, dbud*3, dbud*4]
@@ -211,7 +219,6 @@ def print_result():
 
     print("Remaining Budget\nAdvertiser 1: ", advertisers[0].budget," Advertiser 2: ", advertisers[1].budget," Advertiser 3: ", advertisers[2].budget," Advertiser 4: ", advertisers[3].budget)
 
-################################################
 
 
 
@@ -224,29 +231,25 @@ number_of_experiments = 1
 
 # number of advertisers for each publisher
 
-N_ADS = 4
-N_SLOTS = 4
-N_USERS = 30  # number of users for each day
-N_KLASSES = 3
-TIME_SPLIT = 7
-
-
-##########   ADVERTISER SETTING   ##############
-
 N_BIDS = 4                  #Number of linspaced Bids
 N_BUDGET = 4                #Number of Daily budget choices
 N_SUBCAMPAIGN = 4
 N_ARMS = N_BIDS * N_BUDGET
-N_AUCTION = 1
-tot_b = 70000         #Total Budget
+N_ADS = 4
+N_SLOTS = 4
+N_USERS = 100               #Number of users Visiting the site each day
+N_KLASSES = 3               #Classes of user (used only to get the starting q)
+N_AUCTION = 1               #Number of auction per day
+tot_b = 1000000             #Total Budget
 bids = np.linspace(start = 0.25, stop = 1, num = N_BIDS)
-bid_competitor = bids[int(N_BIDS/2)-1]
+bid_competitor = bids[int(N_BIDS/2)-2]
 dbud = ((tot_b/T) / 4) / N_SUBCAMPAIGN        #Used only to divide daily budget
 d_budget= [dbud *3, dbud *3, dbud *3, dbud *3]          #Daily budget competitor (static)
 our_d_budget = [dbud, dbud * 2, dbud * 3, dbud * 4]     #Our possible choice of daily budget
 SLOTS_QUALITY = np.linspace(start = 1, stop = 0.25, num = N_SLOTS) #Quality of the slots(used in VCG Auction)
 
-##########   ADVERTISER SETTING   ##############
+
+
 
 #------------Summary Variable------------#
 
@@ -262,7 +265,6 @@ b4 = []
 vincitori = np.zeros(shape=(4,4))
 choice = np.zeros(shape=(4,4,4),dtype=int)
 
-#------------Summary Variable------------#
 
 
 
@@ -285,9 +287,8 @@ for klass in range(N_KLASSES):
 
 real_q_aggregate = np.sum(list(map(lambda x: x[1] * k_p[x[0]], enumerate(real_q_klass))), axis=0)
 
-cts_rewards_per_experiment_aggregate_advertiser = [[], [], [], []]
-opt_q_aggregate = calculate_opt(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
-
+cts_rewards_per_experiment_aggregate_adv = [[], [], [], []]
+real_q_adv = real_q_klass[0]
 cts_rewards_per_experiment_aggregate = []
 cts_rewards_per_experiment_disaggregate = []
 
@@ -318,11 +319,27 @@ user_data = []
 for publisher in publishers:
     advertisers = []
     for i in range(N_ADS):
-        advertiser = Advertiser(bid=bid_competitor, publisher=publisher, budget=tot_b, d_budget= np.random.uniform(d_budget[np.random.randint(0,3)], size=4))
+        advertiser = Advertiser(bid=bid_competitor, publisher=publisher, budget=tot_b, d_budget= np.random.uniform(d_budget[np.random.randint(0,3)], size=4 ))
         advertisers.append(advertiser)
 
     for e in range(number_of_experiments):
         print(np.round((e + 1) / number_of_experiments * 10000) / 100, "%")
+
+
+        for a in range(len(advertisers)):
+            advertisers[a].budget = tot_b #at every experiment set a new budget
+        print("Experiment ", e+1, "/", number_of_experiments)
+
+        learner_by_subcampaign = []
+        for subcampaign in range(N_SUBCAMPAIGN):
+            advlearner = AdvLearner(n_arms =N_ARMS,n_ads = N_ADS,n_bids = N_BIDS, n_budget= N_BUDGET, t = T, bids = bids, D_budget = our_d_budget)
+            learner_by_subcampaign.append(advlearner)
+
+        knap = KnapOptimizer(n_bids=N_BIDS, n_budget=N_BUDGET, n_subcampaign=4,bids = bids)
+
+
+
+
         cts_learner_aggregate = CTSLearner(n_ads=N_ADS, n_slots=publisher.n_slots, t=T)
 
         learners_by_context = []
@@ -334,51 +351,22 @@ for publisher in publishers:
         cts_rewards_per_experiment_disaggregate.append([])
         week = 0
 
-        ############################  ADV PART  ####################################
-        for a in range(len(advertisers)):
-            advertisers[a].budget = tot_b #at every experiment set a new budget
-
-        learner_by_subcampaign = []
-        for subcampaign in range(N_SUBCAMPAIGN):
-            advlearner = AdvLearner(n_arms=N_ARMS, n_ads=N_ADS, n_bids=N_BIDS, n_budget=N_BUDGET, t=T, bids=bids,
-                                    D_budget=our_d_budget)
-            learner_by_subcampaign.append(advlearner)
-
-        knap = KnapOptimizer(n_bids=N_BIDS, n_budget=N_BUDGET, n_subcampaign=4, bids=bids)
-
-        ###########################  /////  ########################################
-
         # Default partition is partition that aggregates all 3 user classes
         partition = partitions[0]
         partition_index = 0
         print(partition)
         for t in tqdm(range(T)):
-            # generate contexts (partition)
-            if int(t / TIME_SPLIT) > week:
-                week += 1
-                # choose best partition for new week by collected data
-                partition, partition_index = choose_best_partition(user_data[e], partitions, k_p,
-                                                                   prev_p_index=partition_index)
-                #print(partition)
+            # generate contexts (partition)ù
 
-            user_data[e].append([])
-            cts_rewards_per_experiment_disaggregate[e].append([])
-
-            users = generate_users(k_p, N_USERS)
-
-            environment = AdAuctionEnvironment(advertisers, publisher, users, real_q=real_q_aggregate,
-                                               real_q_klass=real_q_klass)
-
-
-
-            ############################  ADV PART  ####################################
-
-            # 1. Initialize every day daily budget, Environment, Daily reward
             no_money_d = np.zeros((4, 4), dtype=bool)
             for a in range(1, len(advertisers)):
                 advertisers[a].d_budget = np.random.uniform(d_budget[np.random.randint(0, 3)],
                                                             size=4)  # at every day i set a new d_budget
                 advertisers[a].bid = bids[int(N_BIDS / 2) - 1] + np.random.normal(0.1, 0.5, 1) / 20
+
+            users = generate_users(k_p, N_USERS)
+            Adenvironment = AdAuctionEnvironment(advertisers, publisher, users, real_q=real_q_aggregate,
+                                                 real_q_klass=real_q_klass)
 
             sample_n = []
             res_auction = []
@@ -391,31 +379,52 @@ for publisher in publishers:
 
             # 3. Run the Knapsack Optimizer and get the Optimal Daily Budget/Bid Couple
             #    and set the daily budget to our advertiser (for every subcampaign)
-            superarm = knap.Optimize(sample_n)
+            superarm_adv = knap.Optimize(sample_n)
             for i in range(N_SUBCAMPAIGN):
-                advertisers[0].d_budget[i] = our_d_budget[superarm[i][0]]
-                choice[i][superarm[0][0]][superarm[0][1]] += 1
+                advertisers[0].d_budget[i] = our_d_budget[superarm_adv[i][0]]
+                choice[i][superarm_adv[0][0]][superarm_adv[0][1]] += 1
 
-            # 4. Iterate Over N_Auction
-            #    For each subcampaign create an run a simulation of an auction
+            if int(t / 50) > week:
+                week += 1
+                # choose best partition for new week by collected data
+                partition, partition_index = choose_best_partition(user_data[e], partitions, k_p,
+                                                                   prev_p_index=partition_index)
+                print(partition)
+
+            user_data[e].append([])
+            cts_rewards_per_experiment_disaggregate[e].append([])
+
+            users = generate_users(k_p, N_USERS)
+
+            environment = AdAuctionEnvironment(advertisers, publisher, users, real_q=real_q_aggregate,
+                                               real_q_klass=real_q_klass)
             for auc in range(N_AUCTION):
-
                 for arm in range(N_SUBCAMPAIGN):
-                    auction = VCG_auction(real_q_aggregate, superarm[arm], N_SLOTS, advertisers, minbid=bids[0])
-                    res_auction.append(auction.choosing_the_slot(real_q_aggregate, SLOTS_QUALITY, arm))
-                    q_adv[arm] = get_q(res_auction, arm)
+                    auction = VCG_auction(real_q_adv, superarm_adv[arm], N_SLOTS, advertisers,minbid=bids[0])
+                    res_auction.append(auction.choosing_the_slot(real_q_adv, SLOTS_QUALITY,arm))
+                    q_adv[arm] = get_q(res_auction,arm)
                     check_dbudget(advertisers, arm)
 
-                    # Here we Have the pay per click for each subcampaign
-                    paying[arm] = [x for _, x in sorted(zip(res_auction[arm][0], res_auction[arm][2]))]
+                    #Here we Have the pay per click for each subcampaign
+                    paying[arm] = [x for _,x in sorted(zip(res_auction[arm][0],res_auction[arm][2]))]
 
                 check_budget(advertisers)
 
                 # 5. For every User (Over N_Subcampaign)
                 #    Check budget and update the budget
                 #    get the reward after a simulation of user behaviour
-
                 for user in users:
+                    for j in range(N_SUBCAMPAIGN):
+
+                        if (not (no_money_d[0][j])):
+                            has_finished[j][t] += 1
+
+                        reward_adv = environment.simulate_user_behaviour_auction(user, q_adv[j], advertisers) #SIMULART |||||||||||||
+                        reward_adv = update_budget(reward_adv, advertisers,j)
+                        check_dbudget(advertisers,j)
+                        check_budget(advertisers)
+                        reward_gaussian[j] += reward_adv[0]
+
                     # ############ aggregate Learner
                     # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM
                     samples_aggregate = samples_from_learner(cts_learner_aggregate, N_ADS, N_SLOTS)
@@ -440,21 +449,19 @@ for publisher in publishers:
 
                     user_data[e][t].append([user, reward, superarm])
 
-                    for j in range(N_SUBCAMPAIGN):
-
-                        if (not (no_money_d[0][j])):
-                            has_finished[j][t] += 1
-
-                        reward = environment.simulate_user_behaviour_auction(user, q_adv[j], advertisers) #SIMULART |||||||||||||
-                        reward = update_budget(reward, advertisers,j)
-                        reward_gaussian[j] += reward[0]
-
             for i in range(N_SUBCAMPAIGN):
-                learner_by_subcampaign[i].update(superarm[i], reward_gaussian[i], t)
+                learner_by_subcampaign[i].update(superarm_adv[i], reward_gaussian[i], t)
+
+
 
         # print(partition)
         # collect results for publisher
         cts_rewards_per_experiment_aggregate.append(cts_learner_aggregate.collected_rewards)
+
+
+        for i in range(N_SUBCAMPAIGN):
+            cts_rewards_per_experiment_aggregate_adv[i].append(learner_by_subcampaign[i].collected_rewardsy)
+
 
         for context_index in range(len(contexts)):
             collected_rewards = learners_by_context[context_index].collected_rewards
@@ -466,37 +473,31 @@ for publisher in publishers:
 
             cts_rewards_per_experiment_disaggregate[e][t] = np.sum(np.array(c), axis=0)
 
-    ############################  ADV PART  ####################################
+    print_result()
+    print("TOTAL STEP: ", (N_USERS * N_AUCTION), "/", has_finished[0])
 
-        for i in range(N_SUBCAMPAIGN):
-            cts_rewards_per_experiment_aggregate_advertiser[i].append(learner_by_subcampaign[i].collected_rewardsy)
 
     for i in range(N_SUBCAMPAIGN):
-        cts_rewards_per_experiment_aggregate_advertiser[i] = np.array(cts_rewards_per_experiment_aggregate_advertiser[i])
-
-    opt_q_aggregate_adv = calculate_opt_advreal(real_q_aggregate)
+        cts_rewards_per_experiment_aggregate_adv[i] = np.array(cts_rewards_per_experiment_aggregate_adv[i])
+    opt_q_aggregate_adv = calculate_opt_advreal(real_q_adv)
+    #opt_q_aggregate = calculate_opt(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
     cumsum_aggregate_adv = []
-    reward_aggregate_adv = []
-
+    reward_aggregate = []
     for i in range(N_SUBCAMPAIGN):
-        cumsum_aggregate_adv.append(np.cumsum(np.mean(opt_q_aggregate_adv - (cts_rewards_per_experiment_aggregate_advertiser[i] / (N_USERS * N_AUCTION)),axis=0),axis=0))
-        reward_aggregate_adv.append(np.mean(cts_rewards_per_experiment_aggregate_advertiser[i], axis=0))
+        cumsum_aggregate_adv.append(np.cumsum(np.mean(opt_q_aggregate_adv - (cts_rewards_per_experiment_aggregate_adv[i]/(N_USERS*N_AUCTION)), axis=0),axis=0))
+        reward_aggregate.append(np.mean(cts_rewards_per_experiment_aggregate_adv[i],axis=0))
 
-    smooth_reward_adv = []
-    reward_aggregate_adv = np.mean(reward_aggregate_adv, axis=0)
-    for r_i, r in enumerate(reward_aggregate_adv):
+    smooth_reward = []
+    reward_aggregate2 = np.mean(reward_aggregate, axis=0)
+    for r_i, r in enumerate(reward_aggregate2):
         if r_i >= 25:
-            smooth_reward_adv.append(np.mean(reward_aggregate_adv[r_i - 25:r_i]))
+            smooth_reward.append(np.mean(reward_aggregate2[r_i - 25:r_i]))
         else:
             if r_i >= 5:
-                smooth_reward_adv.append(np.mean(reward_aggregate_adv[r_i - 5:r_i]))
+                smooth_reward.append(np.mean(reward_aggregate2[r_i - 5:r_i]))
             else:
-                smooth_reward_adv.append(r)
+                smooth_reward.append(r)
 
-    ###########################  /////  ########################################
-
-
-    print_result()
     # Plot curve
     # Prepare data for aggregated model
     cts_rewards_per_experiment_aggregate = np.array(cts_rewards_per_experiment_aggregate)
@@ -509,6 +510,7 @@ for publisher in publishers:
     opt_q_disaggregate = np.sum(list(map(lambda x: x[1] * k_p[x[0]], enumerate(opt_q_klass))), axis=0)
     cumsum_disaggregate = np.cumsum(np.mean(opt_q_disaggregate - cts_rewards_per_experiment_disaggregate, axis=0),
                                     axis=0)
+
 
     plt.figure(1)
     plt.title("Regret Publisher")
@@ -584,7 +586,7 @@ for publisher in publishers:
     plt.title("Reward Advertiser")
     plt.xlabel("t")
     plt.ylabel("Reward")
-    plt.plot(smooth_reward_adv, 'blue')
+    plt.plot(smooth_reward, 'blue')
     plt.legend(["Advertiser"])
     plt.show()
 
