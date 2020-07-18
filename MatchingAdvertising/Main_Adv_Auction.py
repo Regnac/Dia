@@ -124,8 +124,9 @@ def print_result():
     print("Remaining Budget\nAdvertiser 1: ", advertisers[0].budget," Advertiser 2: ", advertisers[1].budget," Advertiser 3: ", advertisers[2].budget," Advertiser 4: ", advertisers[3].budget)
 
 #------------PARAMETER SETTING------------#
+
 T = 200
-number_of_experiments = 1
+number_of_experiments = 5
 
 N_BIDS = 4                  #Number of linspaced Bids
 N_BUDGET = 4                #Number of Daily budget choices
@@ -142,19 +143,20 @@ bid_competitor = bids[int(N_BIDS/2)-1]
 dbud = ((tot_b/T) / 4) / N_SUBCAMPAIGN        #Used only to divide daily budget
 d_budget= [dbud *3, dbud *3, dbud *3, dbud *3]          #Daily budget competitor (static)
 our_d_budget = [dbud, dbud * 2, dbud * 3, dbud * 4]     #Our possible choice of daily budget
+SLOTS_QUALITY = np.linspace(start = 1, stop = 0.25, num = N_SLOTS) #Quality of the slots(used in VCG Auction)
+
+#------------PARAMETER SETTING------------#
+
+
+
+
+#------------Summary Variable------------#
 
 paying = np.zeros(shape=(4,4))
 no_money_d = np.zeros((4, 4), dtype=bool)
 no_money_b = np.zeros((4), dtype=bool)
 has_finished = np.zeros((4,T), dtype=int)
-#------------PARAMETER SETTING------------#
 
-
-for i in range(20):
-    print("BIDS ", bids[int(N_BIDS/2)-1] + np.random.normal(0.1, 0.5, 1)/20)
-
-
-#------------Summary Variable------------#
 b1 = []     #Cumulative Budget of Advertisers
 b2 = []
 b3 = []
@@ -162,11 +164,12 @@ b4 = []
 vincitori = np.zeros(shape=(4,4))
 choice = np.zeros(shape=(4,4,4),dtype=int)
 
-#Quality of the slots(used in VCG Auction)
-SLOTS_QUALITY = np.linspace(start = 1, stop = 0.25, num = N_SLOTS)
-#SLOTS_QUALITY = -np.sort(-np.random.choice(range(5), 4, replace=False))
+#------------Summary Variable------------#
+
 
 publisher1 = Publisher(n_slots=4)
+publishers = [publisher1]
+
 k_p = generate_klasses_proportion(N_KLASSES)
 real_q_klass = []
 for klass in range(N_KLASSES):
@@ -177,13 +180,10 @@ opt_q_klass = list(map(lambda x: calculate_opt(x, n_slots=N_SLOTS, n_ads=N_ADS),
 
 real_q_aggregate = real_q_klass[0]
 cts_rewards_per_experiment_aggregate = [[], [], [], []]
-#cts_rewards_per_ex_klass = [[] for i in range(N_KLASSES)]
-#opt_q_adv = calculate_opt_advreal(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
 opt_q_aggregate = calculate_opt(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
-opt_q_disaggregate = np.sum(list(map(lambda x: x[1] * k_p[x[0]], enumerate(opt_q_klass))), axis=0)
 
 
-publishers = [publisher1]
+
 k_p = generate_klasses_proportion(N_KLASSES)
 
 
@@ -198,7 +198,6 @@ for publisher in publishers:
 
         ##### For every experiment
         ##      we initiliaze budget, istance of learners, instance of knapsack optimizer
-        total = 0
 
         for a in range(len(advertisers)):
             advertisers[a].budget = tot_b #at every experiment set a new budget
@@ -284,9 +283,21 @@ for publisher in publishers:
         cts_rewards_per_experiment_aggregate[i] = np.array(cts_rewards_per_experiment_aggregate[i])
     opt_q_aggregate = calculate_opt_advreal(real_q_aggregate)
     cumsum_aggregate = []
+    reward_aggregate = []
     for i in range(N_SUBCAMPAIGN):
         cumsum_aggregate.append(np.cumsum(np.mean(opt_q_aggregate - (cts_rewards_per_experiment_aggregate[i]/(N_USERS*N_AUCTION)), axis=0),axis=0))
+        reward_aggregate.append(np.mean(cts_rewards_per_experiment_aggregate[i],axis=0))
 
+    smooth_reward = []
+    reward_aggregate2 = np.mean(reward_aggregate, axis=0)
+    for r_i, r in enumerate(reward_aggregate):
+        if r_i >= 25:
+            smooth_reward.append(np.mean(reward_aggregate2[r_i - 25:r_i]))
+        else:
+            if r_i >= 5:
+                smooth_reward.append(np.mean(reward_aggregate2[r_i - 5:r_i]))
+            else:
+                smooth_reward.append(r)
 
     plt.figure(1)
     plt.title("Budget")
@@ -296,6 +307,7 @@ for publisher in publishers:
     plt.plot(b2, 'r')
     plt.plot(b3, 'b')
     plt.plot(b4, 'y')
+    plt.show()
 
     plt.figure(2)
     plt.title("Regret for each subcampaign")
@@ -304,11 +316,19 @@ for publisher in publishers:
     plt.plot(cumsum_aggregate[2], "b")
     plt.plot(cumsum_aggregate[3], "y")
     plt.legend(["Sub1", "Sub2", "Sub3", "Sub4"])
+    plt.show()
 
     plt.figure(3)
     plt.title("Regret")
     plt.xlabel("t")
     plt.ylabel("Regret")
-    plt.plot(np.mean(cumsum_aggregate,axis=0), 'm')
+    plt.plot(np.mean(cumsum_aggregate, axis= 0), 'm')
+    plt.show()
 
+    plt.figure(4)
+    plt.title("Reward")
+    plt.xlabel("t")
+    plt.ylabel("Reward")
+    #plt.plot(np.mean(reward_aggregate,axis=0), 'm')
+    plt.plot(smooth_reward, 'g')
     plt.show()

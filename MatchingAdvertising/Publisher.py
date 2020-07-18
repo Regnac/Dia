@@ -10,26 +10,13 @@ class Publisher:
         self.n_slots = n_slots
         self.slots = np.array([[] for i in range(n_slots)])  # or just [] or np.array[]
 
-    def allocate_ads(self, samples, advertisers, real_q_aggregate):
+    def allocate_ads(self, samples):
         n_ads = len(samples)
         graph_matrix = np.zeros(shape=(n_ads, self.n_slots))
 
         for i in range(n_ads):
             for j in range(self.n_slots):
-                graph_matrix[i][j] = samples[i][j] * advertisers[i].bid  #q_ij * bid_j
-
-                # if (i == 0):
-                #     graph_matrix[i][j] = samples[i][j] * advertisers[i].bid  # q_ij * bid_j #I DONT LIKE IT
-                # if (i == 1):
-                #     graph_matrix[i][j] = real_q_aggregate[i][j] * advertisers[
-                #         i].bid  # WE KNOW Q FOR STOCHASTIC ADVERTISER
-                # if (i == 2):
-                #     graph_matrix[i][j] = real_q_aggregate[i][j] * advertisers[i].bid
-                # if (i == 3):
-                #     graph_matrix[i][j] = real_q_aggregate[i][j] * advertisers[
-                #         i].bid  # WE KNOW Q FOR STOCHASTIC ADVERTISER
-
-
+                graph_matrix[i][j] = samples[i][j]
         # print("Ads allocating:")
         # print(graph_matrix)
         # print("Running hungarian...")

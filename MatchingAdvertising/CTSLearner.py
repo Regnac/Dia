@@ -33,7 +33,6 @@ class CTSLearner:
         # pull arm
         return
 
-    #cts_learner_aggregate.update(superarm_aggregate, reward_aggregate, t=t)
     def update(self, superarm, reward, t):
         self.t += 1
         self.collected_rewards[t].append(reward)
@@ -41,9 +40,3 @@ class CTSLearner:
             self.update_observations(arm, reward[arm_i])
             self.beta_parameters[arm[0], arm[1], 0] += reward[arm_i]
             self.beta_parameters[arm[0], arm[1], 1] += 1 - reward[arm_i]
-
-
-    def update_after_auction(self,  reward, t):
-        self.t += 1
-        self.collected_rewards[t].append(reward)
-
