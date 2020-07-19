@@ -267,9 +267,6 @@ choice = np.zeros(shape=(4,4,4),dtype=int)
 
 
 
-
-
-
 publisher1 = Publisher(n_slots=4)
 
 publishers = [publisher1]
@@ -323,12 +320,10 @@ for publisher in publishers:
         advertisers.append(advertiser)
 
     for e in range(number_of_experiments):
-        print(np.round((e + 1) / number_of_experiments * 10000) / 100, "%")
-
+        print("Experiment ", e+1, "/", number_of_experiments)
 
         for a in range(len(advertisers)):
             advertisers[a].budget = tot_b #at every experiment set a new budget
-        print("Experiment ", e+1, "/", number_of_experiments)
 
         learner_by_subcampaign = []
         for subcampaign in range(N_SUBCAMPAIGN):
@@ -336,9 +331,6 @@ for publisher in publishers:
             learner_by_subcampaign.append(advlearner)
 
         knap = KnapOptimizer(n_bids=N_BIDS, n_budget=N_BUDGET, n_subcampaign=4,bids = bids)
-
-
-
 
         cts_learner_aggregate = CTSLearner(n_ads=N_ADS, n_slots=publisher.n_slots, t=T)
 
@@ -354,7 +346,7 @@ for publisher in publishers:
         # Default partition is partition that aggregates all 3 user classes
         partition = partitions[0]
         partition_index = 0
-        print(partition)
+        #print(partition)
         for t in tqdm(range(T)):
             # generate contexts (partition)ù
 
@@ -389,7 +381,7 @@ for publisher in publishers:
                 # choose best partition for new week by collected data
                 partition, partition_index = choose_best_partition(user_data[e], partitions, k_p,
                                                                    prev_p_index=partition_index)
-                print(partition)
+                #print(partition)
 
             user_data[e].append([])
             cts_rewards_per_experiment_disaggregate[e].append([])
@@ -512,47 +504,12 @@ for publisher in publishers:
                                     axis=0)
 
 
-    plt.figure(1)
-    plt.title("Regret Publisher")
-    plt.xlabel("t")
-    plt.ylabel("Regret")
-    plt.plot(list(map(lambda x: np.sum(x), cumsum_aggregate)), 'm')
-    plt.plot(list(map(lambda x: np.sum(x), cumsum_disaggregate)), 'orange')
-    plt.legend(["Aggregated", "Disaggregated"])
-    plt.show()
-
-
-
-    plt.figure(2)
-    plt.title("Regret Advertiser")
-    plt.xlabel("t")
-    plt.ylabel("Regret")
-    plt.plot(list(map(lambda x: np.sum(x), np.mean(cumsum_aggregate_adv, axis= 0))), 'green')
-    plt.show()
-
-
-    # Plot reward
     mean_reward_aggregate = np.mean(cts_rewards_per_experiment_aggregate, axis=0)
     mean_reward_disaggregate = np.mean(cts_rewards_per_experiment_disaggregate, axis=0)
 
-    # plt.figure(3)
-    # plt.title("Reward Publisher")
-    # plt.xlabel("t")
-    # plt.ylabel("Reward")
-    # plt.plot(list(map(lambda x: np.sum(x), mean_reward_aggregate)), 'm')
-    # plt.plot(list(map(lambda x: np.sum(x), mean_reward_disaggregate)), 'orange')
-    # plt.legend(["Aggregated", "Disaggregated"])
-    # plt.show()
-
     reward_disaggregate = list(map(lambda x: np.sum(x), mean_reward_disaggregate))
     reward_aggregate = list(map(lambda x: np.sum(x), mean_reward_aggregate))
-    # plt.figure(3)
-    # plt.xlabel("t")
-    # plt.ylabel("Regret")
-    # plt.plot(np.cumsum(np.mean(reward_disaggregate[200:350]) - reward_disaggregate), 'orange')
-    # plt.plot(np.cumsum(np.mean(reward_disaggregate[200:350]) - reward_aggregate), 'm')
-    # plt.legend(["Disaggregated", "Aggregated"])
-    # plt.show()
+
 
     smooth_reward_a = []
     for r_i, r in enumerate(reward_aggregate):
@@ -572,22 +529,86 @@ for publisher in publishers:
                 smooth_reward_d.append(np.mean(reward_disaggregate[r_i - 5:r_i]))
             else:
                 smooth_reward_d.append(r)
-    plt.figure(3)
-    plt.title("Reward Publisher")
+
+
+
+
+
+
+
+    plt.figure(1)
+    plt.title("Regret Publisher (Point 3)")
+    plt.xlabel("t")
+    plt.ylabel("Regret")
+    plt.plot(list(map(lambda x: np.sum(x), cumsum_aggregate)), 'orange')
+    plt.legend(["Aggregated regret"])
+    plt.show()
+
+    plt.figure(2)
+    plt.title("Reward Publisher(Point 3)")
     plt.xlabel("t")
     plt.ylabel("Reward")
-    plt.plot(smooth_reward_a, 'm')
-    plt.plot(smooth_reward_d, 'orange')
-    plt.legend(["Aggregated", "Disaggregated"])
+    plt.plot(smooth_reward_a, 'green')
+    plt.legend(["Aggregated reward"])
     plt.show()
 
 
+    plt.figure(3)
+    plt.title("Regret Publisher (Point 4)")
+    plt.xlabel("t")
+    plt.ylabel("Regret")
+    plt.plot(list(map(lambda x: np.sum(x), cumsum_disaggregate)), 'orange')
+    plt.legend(["Disaggregated regret"])
+    plt.show()
+
     plt.figure(4)
-    plt.title("Reward Advertiser")
+    plt.title("Reward Publisher (Point 4)")
     plt.xlabel("t")
     plt.ylabel("Reward")
-    plt.plot(smooth_reward, 'blue')
-    plt.legend(["Advertiser"])
+    plt.plot(smooth_reward_d, 'green')
+    plt.legend(["Context reward"])
+    plt.show()
+
+
+
+
+
+    plt.figure(5)
+    plt.title("Regret Advertiser (Point 6)")
+    plt.xlabel("t")
+    plt.ylabel("Regret")
+    plt.plot(list(map(lambda x: np.sum(x), np.mean(cumsum_aggregate_adv, axis= 0))), 'blue')
+    plt.legend(["Advertiser regret"])
+    plt.show()
+
+
+    # Plot reward
+
+
+    # plt.figure(3)
+    # plt.title("Reward Publisher")
+    # plt.xlabel("t")
+    # plt.ylabel("Reward")
+    # plt.plot(list(map(lambda x: np.sum(x), mean_reward_aggregate)), 'm')
+    # plt.plot(list(map(lambda x: np.sum(x), mean_reward_disaggregate)), 'orange')
+    # plt.legend(["Aggregated", "Disaggregated"])
+    # plt.show()
+
+
+    # plt.figure(3)
+    # plt.xlabel("t")
+    # plt.ylabel("Regret")
+    # plt.plot(np.cumsum(np.mean(reward_disaggregate[200:350]) - reward_disaggregate), 'orange')
+    # plt.plot(np.cumsum(np.mean(reward_disaggregate[200:350]) - reward_aggregate), 'm')
+    # plt.legend(["Disaggregated", "Aggregated"])
+    # plt.show()
+
+    plt.figure(6)
+    plt.title("Reward Advertiser (point 6)")
+    plt.xlabel("t")
+    plt.ylabel("Reward")
+    plt.plot(smooth_reward, 'green')
+    plt.legend(["Advertiser reward"])
     plt.show()
 
 
