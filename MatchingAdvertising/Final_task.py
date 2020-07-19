@@ -295,7 +295,7 @@ for klass in range(N_KLASSES):
 
 real_q_aggregate = np.sum(list(map(lambda x: x[1] * k_p[x[0]], enumerate(real_q_klass))), axis=0)
 
-cts_rewards_per_experiment_aggregate_adv = [[], [], [], []]
+rewards_vcg = [[], [], [], []]
 real_q_adv = real_q_klass[0]
 cts_rewards_per_experiment_aggregate = []
 cts_rewards_per_experiment_disaggregate = []
@@ -352,7 +352,7 @@ for publisher in publishers:
 
         user_data.append([])
         cts_rewards_per_experiment_disaggregate.append([])
-        week = 0
+        period = 0
 
         # Default partition is partition that aggregates all 3 user classes
         partition = partitions[0]
@@ -383,9 +383,9 @@ for publisher in publishers:
                 advertisers[0].d_budget[i] = our_d_budget[superarm_adv[i][0]]
                 choice[i][superarm_adv[0][0]][superarm_adv[0][1]] += 1
 
-            if int(t / DAYS_SPLIT) > week:
-                week += 1
-                # choose best partition for new week by collected data
+            if int(t / DAYS_SPLIT) > period:
+                period += 1
+                # choose best partition for new period by collected data
                 partition, partition_index = choose_best_partition(user_data[e], partitions, k_p,
                                                                    prev_p_index=partition_index)
                 #print(partition)
@@ -424,6 +424,8 @@ for publisher in publishers:
                         check_budget(advertisers)
                         reward_gaussian[j] += reward_adv[0]
 
+            for i in range(N_SUBCAMPAIGN):
+                learner_by_subcampaign[i].update(superarm_adv[i], reward_gaussian[i], t)
 
 
             for user in users:
@@ -451,10 +453,6 @@ for publisher in publishers:
 
                 user_data[e][t].append([user, reward, superarm])
 
-            for i in range(N_SUBCAMPAIGN):
-                learner_by_subcampaign[i].update(superarm_adv[i], reward_gaussian[i], t)
-
-
 
         # print(partition)
         # collect results for publisher
@@ -462,7 +460,7 @@ for publisher in publishers:
 
 
         for i in range(N_SUBCAMPAIGN):
-            cts_rewards_per_experiment_aggregate_adv[i].append(learner_by_subcampaign[i].collected_rewardsy)
+            rewards_vcg[i].append(learner_by_subcampaign[i].collected_rewardsy)
 
 
         for context_index in range(len(contexts)):
@@ -480,14 +478,14 @@ for publisher in publishers:
 
 
     for i in range(N_SUBCAMPAIGN):
-        cts_rewards_per_experiment_aggregate_adv[i] = np.array(cts_rewards_per_experiment_aggregate_adv[i])
+        rewards_vcg[i] = np.array(rewards_vcg[i])
     opt_q_aggregate_adv = calculate_opt_advreal(real_q_adv)
     #opt_q_aggregate = calculate_opt(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
     cumsum_aggregate_adv = []
     reward_aggregate_adv = []
     for i in range(N_SUBCAMPAIGN):
-        cumsum_aggregate_adv.append(np.cumsum(np.mean(opt_q_aggregate_adv - (cts_rewards_per_experiment_aggregate_adv[i]/(N_USERS*N_AUCTION)), axis=0),axis=0))
-        reward_aggregate_adv.append(np.mean(cts_rewards_per_experiment_aggregate_adv[i],axis=0))
+        cumsum_aggregate_adv.append(np.cumsum(np.mean(opt_q_aggregate_adv - (rewards_vcg[i]/(N_USERS*N_AUCTION)), axis=0),axis=0))
+        reward_aggregate_adv.append(np.mean(rewards_vcg[i],axis=0))
 
     smooth_reward = []
     reward_aggregate2 = np.mean(reward_aggregate_adv, axis=0)
