@@ -10,6 +10,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+def make_smoother(data):
+    smoothed = []
+    for d_i, d in enumerate(data):
+        if d_i >= 25:
+            smoothed.append(np.mean(data[d_i - 25:d_i]))
+        else:
+            if d_i >= 5:
+                smoothed.append(np.mean(data[d_i - 5:d_i]))
+            else:
+                smoothed.append(d)
+    return smoothed
+
 def extract_hungarian_result(initial_matrix, hungarian_matrix):
     m_shape = np.shape(hungarian_matrix)
     result = np.array([])
@@ -139,7 +151,7 @@ def get_context_index(context, contexts):
 ################################################
 
 # T - Time horizon - number of days
-T = 365
+T = 200
 
 number_of_experiments = 40
 
@@ -149,6 +161,7 @@ N_ADS = 4
 N_SLOTS = 4
 N_USERS = 10  # number of users for each day
 N_KLASSES = 3
+PERIOD_TIME = 50
 
 publisher1 = Publisher(n_slots=4)
 
@@ -211,7 +224,7 @@ for publisher in publishers:
 
         user_data.append([])
         cts_rewards_per_experiment_disaggregate.append([])
-        week = 0
+        period = 0
 
         # Default partition is partition that aggregates all 3 user classes
         partition = partitions[0]
@@ -219,9 +232,9 @@ for publisher in publishers:
         print(partition)
         for t in range(T):
             # generate contexts (partition)
-            if int(t / 150) > week:
-                week += 1
-                # choose best partition for new week by collected data
+            if int(t / PERIOD_TIME) > period:
+                period += 1
+                # choose best partition for new period by collected data
                 partition, partition_index = choose_best_partition(user_data[e], partitions, k_p,
                                                                    prev_p_index=partition_index)
                 print(partition)
@@ -235,7 +248,7 @@ for publisher in publishers:
                                                real_q_klass=real_q_klass)
 
             for user in users:
-                # ############ aggregate Learner 
+                # ############ aggregate Learner
                 # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM
                 samples_aggregate = samples_from_learner(cts_learner_aggregate, N_ADS, N_SLOTS)
                 superarm_aggregate = publisher.allocate_ads(samples_aggregate)
@@ -275,8 +288,8 @@ for publisher in publishers:
     # Plot curve
     # Prepare data for aggregated model
     cts_rewards_per_experiment_aggregate = np.array(cts_rewards_per_experiment_aggregate)
-    opt_q_aggregate = calculate_opt(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
-    cumsum_aggregate = np.cumsum(np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate, axis=0), axis=0)
+    # opt_q_aggregate = calculate_opt(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
+    # cumsum_aggregate = np.cumsum(np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate, axis=0), axis=0)
 
     # Join disaggregated rewards for each experiment and day
     cts_rewards_per_experiment_disaggregate = np.array(cts_rewards_per_experiment_disaggregate)
@@ -284,6 +297,8 @@ for publisher in publishers:
     opt_q_disaggregate = np.sum(list(map(lambda x: x[1] * k_p[x[0]], enumerate(opt_q_klass))), axis=0)
     cumsum_disaggregate = np.cumsum(np.mean(opt_q_disaggregate - cts_rewards_per_experiment_disaggregate, axis=0),
                                     axis=0)
+
+    cumsum_aggregate = np.cumsum(np.mean(opt_q_disaggregate - cts_rewards_per_experiment_aggregate, axis=0), axis=0)
 
     plt.figure(1)
     plt.xlabel("t")
@@ -311,33 +326,31 @@ for publisher in publishers:
     plt.figure(3)
     plt.xlabel("t")
     plt.ylabel("Regret")
-    plt.plot(np.cumsum(np.mean(reward_disaggregate[200:350]) - reward_disaggregate), 'orange')
-    plt.plot(np.cumsum(np.mean(reward_disaggregate[200:350]) - reward_aggregate), 'm')
+    plt.plot(np.cumsum(np.mean(reward_disaggregate[T-25:T]) - reward_disaggregate), 'orange')
+    plt.plot(np.cumsum(np.mean(reward_disaggregate[T-25:T]) - reward_aggregate), 'm')
     plt.legend(["Disaggregated", "Aggregated"])
     plt.show()
 
-    smooth_reward_a = []
-    for r_i, r in enumerate(reward_aggregate):
-        if r_i >= 25:
-            smooth_reward_a.append(np.mean(reward_aggregate[r_i - 25:r_i]))
-        else:
-            if r_i >= 5:
-                smooth_reward_a.append(np.mean(reward_aggregate[r_i - 5:r_i]))
-            else:
-                smooth_reward_a.append(r)
-    smooth_reward_d = []
-    for r_i, r in enumerate(reward_disaggregate):
-        if r_i >= 25:
-            smooth_reward_d.append(np.mean(reward_disaggregate[r_i - 25:r_i]))
-        else:
-            if r_i >= 5:
-                smooth_reward_d.append(np.mean(reward_disaggregate[r_i - 5:r_i]))
-            else:
-                smooth_reward_d.append(r)
+    smooth_reward_a = make_smoother(reward_aggregate)
+    smooth_reward_d = make_smoother(reward_disaggregate)
     plt.figure(4)
     plt.xlabel("t")
     plt.ylabel("Reward")
     plt.plot(smooth_reward_a, 'm')
     plt.plot(smooth_reward_d, 'orange')
     plt.legend(["Aggregated", "Disaggregated"])
+    plt.show()
+    # separated plots
+    plt.figure(5)
+    plt.xlabel("t")
+    plt.ylabel("Reward")
+    plt.plot(smooth_reward_a, 'm')
+    plt.legend(["Aggregated"])
+    plt.show()
+
+    plt.figure(6)
+    plt.xlabel("t")
+    plt.ylabel("Reward")
+    plt.plot(smooth_reward_d, 'orange')
+    plt.legend(["Disaggregated"])
     plt.show()
