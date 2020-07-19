@@ -227,10 +227,10 @@ def print_result():
 # T - Time horizon - number of days
 T = 200
 
-number_of_experiments = 1
+number_of_experiments = 10
 
 # number of advertisers for each publisher
-
+DAYS_SPLIT = 25
 N_BIDS = 4                  #Number of linspaced Bids
 N_BUDGET = 4                #Number of Daily budget choices
 N_SUBCAMPAIGN = 4
@@ -240,7 +240,7 @@ N_SLOTS = 4
 N_USERS = 100               #Number of users Visiting the site each day
 N_KLASSES = 3               #Classes of user (used only to get the starting q)
 N_AUCTION = 1               #Number of auction per day
-tot_b = 1000000             #Total Budget
+tot_b = 100000             #Total Budget
 bids = np.linspace(start = 0.25, stop = 1, num = N_BIDS)
 bid_competitor = bids[int(N_BIDS/2)-2]
 dbud = ((tot_b/T) / 4) / N_SUBCAMPAIGN        #Used only to divide daily budget
@@ -356,10 +356,6 @@ for publisher in publishers:
                                                             size=4)  # at every day i set a new d_budget
                 advertisers[a].bid = bids[int(N_BIDS / 2) - 1] + np.random.normal(0.1, 0.5, 1) / 20
 
-            users = generate_users(k_p, N_USERS)
-            Adenvironment = AdAuctionEnvironment(advertisers, publisher, users, real_q=real_q_aggregate,
-                                                 real_q_klass=real_q_klass)
-
             sample_n = []
             res_auction = []
             reward_gaussian = [0, 0, 0, 0]
@@ -376,7 +372,7 @@ for publisher in publishers:
                 advertisers[0].d_budget[i] = our_d_budget[superarm_adv[i][0]]
                 choice[i][superarm_adv[0][0]][superarm_adv[0][1]] += 1
 
-            if int(t / 50) > week:
+            if int(t / DAYS_SPLIT) > week:
                 week += 1
                 # choose best partition for new week by collected data
                 partition, partition_index = choose_best_partition(user_data[e], partitions, k_p,
@@ -417,29 +413,32 @@ for publisher in publishers:
                         check_budget(advertisers)
                         reward_gaussian[j] += reward_adv[0]
 
-                    # ############ aggregate Learner
-                    # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM
-                    samples_aggregate = samples_from_learner(cts_learner_aggregate, N_ADS, N_SLOTS)
-                    superarm_aggregate = publisher.allocate_ads(samples_aggregate)
-                    # 2. PLAY SUPERARM -  i.e. make a ROUND
-                    reward_aggregate = environment.simulate_user_behaviour_as_aggregate(user, superarm_aggregate)
-                    # 3. UPDATE BETA DISTRIBUTIONS
-                    cts_learner_aggregate.update(superarm_aggregate, reward_aggregate, t=t)
 
-                    # ######## learner for context
-                    # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM
-                    context = get_context_for_user(user.klass, partition)
-                    context_index = get_context_index(context, contexts)
-                    context_learner = learners_by_context[context_index]
 
-                    partition_samples = samples_from_learner(context_learner, N_ADS, N_SLOTS)
-                    superarm = publisher.allocate_ads(partition_samples)
-                    # 2. PLAY SUPERARM -  i.e. make a ROUND
-                    reward = environment.simulate_user_behaviour(user, superarm)
-                    # 3. UPDATE BETA DISTRIBUTIONS
-                    context_learner.update(superarm, reward, t=t)
+            for user in users:
+                # ############ aggregate Learner
+                # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM
+                samples_aggregate = samples_from_learner(cts_learner_aggregate, N_ADS, N_SLOTS)
+                superarm_aggregate = publisher.allocate_ads(samples_aggregate)
+                # 2. PLAY SUPERARM -  i.e. make a ROUND
+                reward_aggregate = environment.simulate_user_behaviour_as_aggregate(user, superarm_aggregate)
+                # 3. UPDATE BETA DISTRIBUTIONS
+                cts_learner_aggregate.update(superarm_aggregate, reward_aggregate, t=t)
 
-                    user_data[e][t].append([user, reward, superarm])
+                # ######## learner for context
+                # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM
+                context = get_context_for_user(user.klass, partition)
+                context_index = get_context_index(context, contexts)
+                context_learner = learners_by_context[context_index]
+
+                partition_samples = samples_from_learner(context_learner, N_ADS, N_SLOTS)
+                superarm = publisher.allocate_ads(partition_samples)
+                # 2. PLAY SUPERARM -  i.e. make a ROUND
+                reward = environment.simulate_user_behaviour(user, superarm)
+                # 3. UPDATE BETA DISTRIBUTIONS
+                context_learner.update(superarm, reward, t=t)
+
+                user_data[e][t].append([user, reward, superarm])
 
             for i in range(N_SUBCAMPAIGN):
                 learner_by_subcampaign[i].update(superarm_adv[i], reward_gaussian[i], t)
@@ -466,7 +465,7 @@ for publisher in publishers:
             cts_rewards_per_experiment_disaggregate[e][t] = np.sum(np.array(c), axis=0)
 
     print_result()
-    print("TOTAL STEP: ", (N_USERS * N_AUCTION), "/", has_finished[0])
+    #print("TOTAL STEP: ", (N_USERS * N_AUCTION), "/", has_finished[0])
 
 
     for i in range(N_SUBCAMPAIGN):
@@ -474,13 +473,13 @@ for publisher in publishers:
     opt_q_aggregate_adv = calculate_opt_advreal(real_q_adv)
     #opt_q_aggregate = calculate_opt(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
     cumsum_aggregate_adv = []
-    reward_aggregate = []
+    reward_aggregate_adv = []
     for i in range(N_SUBCAMPAIGN):
         cumsum_aggregate_adv.append(np.cumsum(np.mean(opt_q_aggregate_adv - (cts_rewards_per_experiment_aggregate_adv[i]/(N_USERS*N_AUCTION)), axis=0),axis=0))
-        reward_aggregate.append(np.mean(cts_rewards_per_experiment_aggregate_adv[i],axis=0))
+        reward_aggregate_adv.append(np.mean(cts_rewards_per_experiment_aggregate_adv[i],axis=0))
 
     smooth_reward = []
-    reward_aggregate2 = np.mean(reward_aggregate, axis=0)
+    reward_aggregate2 = np.mean(reward_aggregate_adv, axis=0)
     for r_i, r in enumerate(reward_aggregate2):
         if r_i >= 25:
             smooth_reward.append(np.mean(reward_aggregate2[r_i - 25:r_i]))
