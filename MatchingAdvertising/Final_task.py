@@ -22,6 +22,17 @@ from hungarian_algorithm import hungarian_algorithm, convert_matrix
 import numpy as np
 import matplotlib.pyplot as plt
 
+def make_smoother(data):
+    smoothed = []
+    for d_i, d in enumerate(data):
+        if d_i >= 25:
+            smoothed.append(np.mean(data[d_i - 25:d_i]))
+        else:
+            if d_i >= 5:
+                smoothed.append(np.mean(data[d_i - 5:d_i]))
+            else:
+                smoothed.append(d)
+    return smoothed
 
 def extract_hungarian_result(initial_matrix, hungarian_matrix):
     m_shape = np.shape(hungarian_matrix)
@@ -227,7 +238,7 @@ def print_result():
 # T - Time horizon - number of days
 T = 200
 
-number_of_experiments = 10
+number_of_experiments = 1
 
 # number of advertisers for each publisher
 DAYS_SPLIT = 25
@@ -492,15 +503,12 @@ for publisher in publishers:
     # Plot curve
     # Prepare data for aggregated model
     cts_rewards_per_experiment_aggregate = np.array(cts_rewards_per_experiment_aggregate)
-    opt_q_aggregate = calculate_opt(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
-    cumsum_aggregate = np.cumsum(np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate, axis=0), axis=0)
+    opt_q_aggregate = calculate_opt(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)*N_USERS
 
     # Join disaggregated rewards for each experiment and day
     cts_rewards_per_experiment_disaggregate = np.array(cts_rewards_per_experiment_disaggregate)
     opt_q_klass = list(map(lambda x: calculate_opt(x, n_slots=N_SLOTS, n_ads=N_ADS), real_q_klass))
-    opt_q_disaggregate = np.sum(list(map(lambda x: x[1] * k_p[x[0]], enumerate(opt_q_klass))), axis=0)
-    cumsum_disaggregate = np.cumsum(np.mean(opt_q_disaggregate - cts_rewards_per_experiment_disaggregate, axis=0),
-                                    axis=0)
+    opt_q_disaggregate = np.sum(list(map(lambda x: x[1] * k_p[x[0]]*N_USERS, enumerate(opt_q_klass))), axis=0)
 
 
     mean_reward_aggregate = np.mean(cts_rewards_per_experiment_aggregate, axis=0)
@@ -510,28 +518,8 @@ for publisher in publishers:
     reward_aggregate = list(map(lambda x: np.sum(x), mean_reward_aggregate))
 
 
-    smooth_reward_a = []
-    for r_i, r in enumerate(reward_aggregate):
-        if r_i >= 25:
-            smooth_reward_a.append(np.mean(reward_aggregate[r_i - 25:r_i]))
-        else:
-            if r_i >= 5:
-                smooth_reward_a.append(np.mean(reward_aggregate[r_i - 5:r_i]))
-            else:
-                smooth_reward_a.append(r)
-    smooth_reward_d = []
-    for r_i, r in enumerate(reward_disaggregate):
-        if r_i >= 25:
-            smooth_reward_d.append(np.mean(reward_disaggregate[r_i - 25:r_i]))
-        else:
-            if r_i >= 5:
-                smooth_reward_d.append(np.mean(reward_disaggregate[r_i - 5:r_i]))
-            else:
-                smooth_reward_d.append(r)
-
-
-
-
+    smooth_reward_a = make_smoother(reward_aggregate)
+    smooth_reward_d = make_smoother(reward_disaggregate)
 
 
 
@@ -539,7 +527,7 @@ for publisher in publishers:
     plt.title("Regret Publisher (Point 3)")
     plt.xlabel("t")
     plt.ylabel("Regret")
-    plt.plot(list(map(lambda x: np.sum(x), cumsum_aggregate)), 'orange')
+    plt.plot(np.cumsum(np.sum(opt_q_aggregate) - reward_aggregate), 'orange')
     plt.legend(["Aggregated regret"])
     plt.show()
 
@@ -556,7 +544,7 @@ for publisher in publishers:
     plt.title("Regret Publisher (Point 4)")
     plt.xlabel("t")
     plt.ylabel("Regret")
-    plt.plot(list(map(lambda x: np.sum(x), cumsum_disaggregate)), 'orange')
+    plt.plot(np.cumsum(np.sum(opt_q_disaggregate) - reward_disaggregate), 'orange')
     plt.legend(["Disaggregated regret"])
     plt.show()
 
@@ -582,25 +570,6 @@ for publisher in publishers:
 
 
     # Plot reward
-
-
-    # plt.figure(3)
-    # plt.title("Reward Publisher")
-    # plt.xlabel("t")
-    # plt.ylabel("Reward")
-    # plt.plot(list(map(lambda x: np.sum(x), mean_reward_aggregate)), 'm')
-    # plt.plot(list(map(lambda x: np.sum(x), mean_reward_disaggregate)), 'orange')
-    # plt.legend(["Aggregated", "Disaggregated"])
-    # plt.show()
-
-
-    # plt.figure(3)
-    # plt.xlabel("t")
-    # plt.ylabel("Regret")
-    # plt.plot(np.cumsum(np.mean(reward_disaggregate[200:350]) - reward_disaggregate), 'orange')
-    # plt.plot(np.cumsum(np.mean(reward_disaggregate[200:350]) - reward_aggregate), 'm')
-    # plt.legend(["Disaggregated", "Aggregated"])
-    # plt.show()
 
     plt.figure(6)
     plt.title("Reward Advertiser (point 6)")

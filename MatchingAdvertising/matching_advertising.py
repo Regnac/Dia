@@ -153,13 +153,13 @@ def get_context_index(context, contexts):
 # T - Time horizon - number of days
 T = 200
 
-number_of_experiments = 40
+number_of_experiments = 1
 
 # number of advertisers for each publisher
 
 N_ADS = 4
 N_SLOTS = 4
-N_USERS = 10  # number of users for each day
+N_USERS = 100  # number of users for each day
 N_KLASSES = 3
 PERIOD_TIME = 50
 
@@ -288,47 +288,63 @@ for publisher in publishers:
     # Plot curve
     # Prepare data for aggregated model
     cts_rewards_per_experiment_aggregate = np.array(cts_rewards_per_experiment_aggregate)
-    # opt_q_aggregate = calculate_opt(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)
-    # cumsum_aggregate = np.cumsum(np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate, axis=0), axis=0)
+    opt_q_aggregate = calculate_opt(real_q_aggregate, n_slots=N_SLOTS, n_ads=N_ADS)*N_USERS
+    cumsum_aggregate = np.cumsum(np.mean(opt_q_aggregate - cts_rewards_per_experiment_aggregate, axis=0), axis=0)
+    regret_aggregate = list(map(lambda x: np.sum(x), cumsum_aggregate))
 
     # Join disaggregated rewards for each experiment and day
     cts_rewards_per_experiment_disaggregate = np.array(cts_rewards_per_experiment_disaggregate)
     opt_q_klass = list(map(lambda x: calculate_opt(x, n_slots=N_SLOTS, n_ads=N_ADS), real_q_klass))
-    opt_q_disaggregate = np.sum(list(map(lambda x: x[1] * k_p[x[0]], enumerate(opt_q_klass))), axis=0)
+    opt_q_disaggregate = np.sum(list(map(lambda x: x[1] * k_p[x[0]] * N_USERS, enumerate(opt_q_klass))), axis=0)
     cumsum_disaggregate = np.cumsum(np.mean(opt_q_disaggregate - cts_rewards_per_experiment_disaggregate, axis=0),
                                     axis=0)
+    regret_disagregate = list(map(lambda x: np.sum(x), cumsum_disaggregate))
+    ######### WRONG CURVES
+    plt.figure(1)
+    plt.xlabel("t")
+    plt.ylabel("Regret")
+    colors = ['r', 'g', 'b']
+    plt.plot(regret_aggregate, 'm')
+    plt.legend(["Aggregated"])
+    plt.show()
 
-    cumsum_aggregate = np.cumsum(np.mean(opt_q_disaggregate - cts_rewards_per_experiment_aggregate, axis=0), axis=0)
 
     plt.figure(1)
     plt.xlabel("t")
     plt.ylabel("Regret")
     colors = ['r', 'g', 'b']
-    plt.plot(list(map(lambda x: np.sum(x), cumsum_aggregate)), 'm')
-    plt.plot(list(map(lambda x: np.sum(x), cumsum_disaggregate)), 'orange')
-    plt.legend(["Aggregated", "Disaggregated"])
+    plt.plot(regret_disagregate, 'orange')
+    plt.legend(["Disaggregated"])
     plt.show()
+    #######################
 
     # Plot reward
     mean_reward_aggregate = np.mean(cts_rewards_per_experiment_aggregate, axis=0)
     mean_reward_disaggregate = np.mean(cts_rewards_per_experiment_disaggregate, axis=0)
 
+    reward_disaggregate = list(map(lambda x: np.sum(x), mean_reward_disaggregate))
+    reward_aggregate = list(map(lambda x: np.sum(x), mean_reward_aggregate))
+
     plt.figure(2)
     plt.xlabel("t")
     plt.ylabel("Reward")
-    plt.plot(list(map(lambda x: np.sum(x), mean_reward_aggregate)), 'm')
-    plt.plot(list(map(lambda x: np.sum(x), mean_reward_disaggregate)), 'orange')
+    plt.plot(reward_aggregate, 'm')
+    plt.plot(reward_disaggregate, 'orange')
     plt.legend(["Aggregated", "Disaggregated"])
     plt.show()
 
-    reward_disaggregate = list(map(lambda x: np.sum(x), mean_reward_disaggregate))
-    reward_aggregate = list(map(lambda x: np.sum(x), mean_reward_aggregate))
     plt.figure(3)
     plt.xlabel("t")
     plt.ylabel("Regret")
-    plt.plot(np.cumsum(np.mean(reward_disaggregate[T-25:T]) - reward_disaggregate), 'orange')
-    plt.plot(np.cumsum(np.mean(reward_disaggregate[T-25:T]) - reward_aggregate), 'm')
-    plt.legend(["Disaggregated", "Aggregated"])
+    plt.plot(np.cumsum(np.sum(opt_q_disaggregate) - reward_disaggregate), 'orange')
+    plt.legend(["Disaggregated"])
+    plt.show()
+
+    plt.figure(3)
+    plt.xlabel("t")
+    plt.ylabel("Regret")
+    plt.plot(np.cumsum(np.sum(opt_q_aggregate) - reward_aggregate), 'm')
+    plt.legend(["Aggregated"])
     plt.show()
 
     smooth_reward_a = make_smoother(reward_aggregate)
