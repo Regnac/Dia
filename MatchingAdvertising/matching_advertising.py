@@ -341,3 +341,17 @@ for publisher in publishers:
     plt.plot(smooth_reward_d, 'orange')
     plt.legend(["Aggregated", "Disaggregated"])
     plt.show()
+    # separated plots
+    plt.figure(5)
+    plt.xlabel("t")
+    plt.ylabel("Reward")
+    plt.plot(smooth_reward_a, 'm')
+    plt.legend(["Aggregated"])
+    plt.show()
+
+    plt.figure(6)
+    plt.xlabel("t")
+    plt.ylabel("Reward")
+    plt.plot(smooth_reward_d, 'orange')
+    plt.legend(["Disaggregated"])
+    plt.show()

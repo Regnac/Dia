@@ -1,0 +1,203 @@
+Index: MatchingAdvertising/matching_advertising.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+># file matching_advertising.py\n\nfrom Publisher import *\nfrom Advertiser import *\nfrom AdAuctionEnvironment import *\nfrom User import *\nfrom CTSLearner import *\nimport numpy as np\nimport matplotlib.pyplot as plt\n\n# T - Time horizon\nT = 365\n\nnumber_of_experiments = 10\n\n# number of advertisers for each publisher\nN_ADS = 4\npublisher1 = Publisher(n_slots=4)\n\npublishers = [publisher1]\n\ncts_rewards_per_experiment = []\n\nfor publisher in publishers:\n    advertisers = []\n    for i in range(N_ADS):\n        advertiser = Advertiser(bid=1, publisher=publisher)\n        advertisers.append(advertiser)\n\n    for e in range(number_of_experiments):\n        cts_learner = CTSLearner(n_ads=N_ADS, n_slots=publisher.n_slots)\n        for t in range(T):\n            print(t)\n            print(\"\\n\")\n            users = []\n            N_USERS = 100  # TODO Get N_USERS from some distribution\n            for i in range(N_USERS):\n                user = User(feature1=np.random.binomial(1, 0.5),\n                            feature2=np.random.binomial(1, 0.5),\n                            klass=np.random.randint(3))\n                users.append(user)\n\n            environment = AdAuctionEnvironment(advertisers, publisher, users)\n            print(\"CTS Step 1\\n\")\n            # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM\n            for A in range(N_ADS):\n                advertisers[A].sampled_weights = np.random.beta(a=cts_learner.beta_parameters[A, :, 0],\n                                                                b=cts_learner.beta_parameters[A, :, 1],\n                                                                size=publisher.n_slots)\n\n            # Then we choose the superarm with maximum sum reward (obtained from publisher)\n            superarm = publisher.allocate_ads(advertisers)\n\n            print(\"CTS Step 2\\n\")\n            # 2. PLAY SUPERARM -  i.e. make a ROUND\n            reward = environment.simulate_users_behaviour(superarm) #il reward è esattamente l'amount of click\n\n            print(\"CTS Step 3\\n\")\n            # 3. UPDATE BETA DISTRIBUTIONS\n            cts_learner.update(superarm, reward)\n\n        # collect results for publisher\n        cts_rewards_per_experiment.append(cts_learner.collected_rewards)\n\n    # Plot graphics\n    # NOW THIS OPT VALUE IS A CRUTCH. But we should determine it somehow. It MAKE influence on our plot!\n    # Try to play with this value and you will see the 'normal' regret plot\n    opt = np.float64(2.6)  # TODO understand how do we obtain opt. I'm sure we have to look at constant q_ij\n    plt.figure(1)\n    plt.xlabel(\"t\")\n    plt.ylabel(\"Regret\")\n    plt.plot(np.cumsum(np.mean(opt - cts_rewards_per_experiment, axis=0)), 'r')\n    plt.legend([\"CTS\"])\n    plt.show()\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- MatchingAdvertising/matching_advertising.py	(revision 4a1ba30c82d8ff1fdb81f813fa83a675eab735f3)
++++ MatchingAdvertising/matching_advertising.py	(date 1588769162050)
+@@ -15,11 +15,13 @@
+ 
+ # number of advertisers for each publisher
+ N_ADS = 4
++N_SLOTS = 4
+ publisher1 = Publisher(n_slots=4)
+ 
+ publishers = [publisher1]
+ 
+ cts_rewards_per_experiment = []
++cts_arm_rewards_per_experiment = []
+ 
+ for publisher in publishers:
+     advertisers = []
+@@ -30,10 +32,10 @@
+     for e in range(number_of_experiments):
+         cts_learner = CTSLearner(n_ads=N_ADS, n_slots=publisher.n_slots)
+         for t in range(T):
+-            print(t)
+-            print("\n")
++            # print(t)
++            # print("\n")
+             users = []
+-            N_USERS = 100  # TODO Get N_USERS from some distribution
++            N_USERS = 20  # TODO Get N_USERS from some distribution
+             for i in range(N_USERS):
+                 user = User(feature1=np.random.binomial(1, 0.5),
+                             feature2=np.random.binomial(1, 0.5),
+@@ -41,7 +43,7 @@
+                 users.append(user)
+ 
+             environment = AdAuctionEnvironment(advertisers, publisher, users)
+-            print("CTS Step 1\n")
++            # print("CTS Step 1\n")
+             # 1. FOR EVERY ARM MAKE A SAMPLE  q_ij - i.e. PULL EACH ARM
+             for A in range(N_ADS):
+                 advertisers[A].sampled_weights = np.random.beta(a=cts_learner.beta_parameters[A, :, 0],
+@@ -51,21 +53,41 @@
+             # Then we choose the superarm with maximum sum reward (obtained from publisher)
+             superarm = publisher.allocate_ads(advertisers)
+ 
+-            print("CTS Step 2\n")
++            # print("CTS Step 2\n")
+             # 2. PLAY SUPERARM -  i.e. make a ROUND
+-            reward = environment.simulate_users_behaviour(superarm) #il reward è esattamente l'amount of click
++            reward = environment.simulate_users_behaviour(superarm)  # il reward è esattamente l'amount of click
+ 
+-            print("CTS Step 3\n")
++            # print("CTS Step 3\n")
+             # 3. UPDATE BETA DISTRIBUTIONS
+             cts_learner.update(superarm, reward)
+ 
+         # collect results for publisher
+         cts_rewards_per_experiment.append(cts_learner.collected_rewards)
++        cts_arm_rewards_per_experiment.append(cts_learner.rewards_per_arm)
+ 
+     # Plot graphics
+     # NOW THIS OPT VALUE IS A CRUTCH. But we should determine it somehow. It MAKE influence on our plot!
+     # Try to play with this value and you will see the 'normal' regret plot
+-    opt = np.float64(2.6)  # TODO understand how do we obtain opt. I'm sure we have to look at constant q_ij
++
++    opt_i = np.argmax(list(map(lambda x: np.max(x.q), advertisers)))
++    opt_j = np.argmax(advertisers[opt_i].q)
++    r_edge_ij = np.sum(cts_learner.rewards_per_arm[opt_i][opt_j])
++    rewards_per_arm = [[0 for j in range(N_SLOTS)] for i in range(N_ADS)]
++    for i in range(N_ADS):
++        for j in range(N_SLOTS):
++            for rpa in cts_arm_rewards_per_experiment:
++                rewards_per_arm[i][j] += np.sum(rpa[i][j])
++    print(opt_i, opt_j)
++    print(rewards_per_arm)
++    print(rewards_per_arm[opt_i][opt_j])
++    r_opt_i = np.argmax(list(map(lambda x: np.max(x), rewards_per_arm)))
++    r_opt_j = np.argmax(rewards_per_arm[r_opt_i])
++    print(r_opt_i, r_opt_j)
++    print(r_opt_i == opt_i, r_opt_j == opt_j)
++
++    opt = np.float64(np.max(list(map(lambda x: np.max(x.q),
++                                     advertisers))))  # TODO understand how do we obtain opt. I'm sure we have to look at constant q_ij
++    opt = np.float64(rewards_per_arm[r_opt_i][r_opt_j])
+     plt.figure(1)
+     plt.xlabel("t")
+     plt.ylabel("Regret")
+Index: MatchingAdvertising/AdAuctionEnvironment.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from Environment import *\n\n\nclass AdAuctionEnvironment(Environment):\n    def __init__(self, advertisers, publisher, users):\n        self.advertisers = advertisers\n        self.publisher = publisher\n        self.users = users\n\n    def simulate_users_behaviour(self, edges):\n        amount_of_clicks = np.zeros(len(edges))\n        # Reward for Ad with max number of clicks will be 1, and reward with 0 num of clicks will be 0\n        max_clicks = 0\n        for u_num in range(len(self.users)):\n            # TODO users select ad according to their features or some distribution\n            for edge in edges:\n                i = edge[0]  # number of advertiser\n                j = edge[1]  # number of slot\n                # if weight of edge (i:j) is b_i * q_ij, then q_ij = w_ij/ b_i\n                real_q_ij = self.advertisers[i].q[j] / self.advertisers[i].bid\n                if np.random.binomial(1, real_q_ij) == 1:\n                    amount_of_clicks[j] += 1\n                    if amount_of_clicks[j] > max_clicks:\n                        max_clicks = amount_of_clicks[j]\n        print(amount_of_clicks.sum())\n        print(amount_of_clicks)\n        if max_clicks != 0:\n            amount_of_clicks /= max_clicks\n        print(amount_of_clicks.sum())\n        print(amount_of_clicks)\n        return amount_of_clicks\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- MatchingAdvertising/AdAuctionEnvironment.py	(revision 4a1ba30c82d8ff1fdb81f813fa83a675eab735f3)
++++ MatchingAdvertising/AdAuctionEnvironment.py	(date 1588769162050)
+@@ -13,19 +13,22 @@
+         max_clicks = 0
+         for u_num in range(len(self.users)):
+             # TODO users select ad according to their features or some distribution
+-            for edge in edges:
++            for edge_num, edge in enumerate(edges):
+                 i = edge[0]  # number of advertiser
+                 j = edge[1]  # number of slot
+                 # if weight of edge (i:j) is b_i * q_ij, then q_ij = w_ij/ b_i
+                 real_q_ij = self.advertisers[i].q[j] / self.advertisers[i].bid
+-                if np.random.binomial(1, real_q_ij) == 1:
+-                    amount_of_clicks[j] += 1
+-                    if amount_of_clicks[j] > max_clicks:
+-                        max_clicks = amount_of_clicks[j]
+-        print(amount_of_clicks.sum())
+-        print(amount_of_clicks)
+-        if max_clicks != 0:
+-            amount_of_clicks /= max_clicks
+-        print(amount_of_clicks.sum())
+-        print(amount_of_clicks)
++                amount_of_clicks[edge_num] += np.random.binomial(1, real_q_ij)
++                # if np.random.binomial(1, real_q_ij) == 1:
++                #     amount_of_clicks[edge_num] += 1
++                #     if amount_of_clicks[edge_num] > max_clicks:
++                #         max_clicks = amount_of_clicks[edge_num]
++                    # break
++        # print(amount_of_clicks.sum())
++        # print(amount_of_clicks)
++        # if max_clicks != 0:
++        #     amount_of_clicks /= max_clicks
++        # amount_of_clicks = np.zeros(len(edges))
++        # print(amount_of_clicks.sum())
++        # print(amount_of_clicks)
+         return amount_of_clicks
+Index: MatchingAdvertising/Publisher.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import numpy as np\nfrom hungarian_algorithm import hungarian_algorithm as hungarian_algorithm\nfrom hungarian_algorithm import convert_matrix as convert_matrix\n\n\nclass Publisher:\n    def __init__(self, n_slots):\n        if n_slots <= 3:\n            raise SystemExit(\"Number of slots should be greater than 3\")\n        self.n_slots = n_slots\n        self.slots = np.array([[] for i in range(n_slots)])  # or just [] or np.array[]\n\n    def allocate_ads(self, ads):\n        n_ads = len(ads)\n        graph_matrix = np.zeros(shape=(n_ads, self.n_slots))\n\n        for i in range(n_ads):\n            for j in range(self.n_slots):\n                graph_matrix[i][j] = ads[i].sampled_weights[j]\n        print(\"Ads allocating:\")\n        print(graph_matrix)\n        print(\"Running hungarian...\")\n        res = hungarian_algorithm(convert_matrix(graph_matrix))\n        m = res[1]\n        edges = []\n        for j in range(len(m[i])):\n            for i in range(len(m)):\n                if m[i][j] == 1:\n                    edges.append([i, j])\n        print(edges)\n        return edges\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- MatchingAdvertising/Publisher.py	(revision 4a1ba30c82d8ff1fdb81f813fa83a675eab735f3)
++++ MatchingAdvertising/Publisher.py	(date 1588769162050)
+@@ -17,15 +17,15 @@
+         for i in range(n_ads):
+             for j in range(self.n_slots):
+                 graph_matrix[i][j] = ads[i].sampled_weights[j]
+-        print("Ads allocating:")
+-        print(graph_matrix)
+-        print("Running hungarian...")
++        # print("Ads allocating:")
++        # print(graph_matrix)
++        # print("Running hungarian...")
+         res = hungarian_algorithm(convert_matrix(graph_matrix))
+         m = res[1]
+         edges = []
+-        for j in range(len(m[i])):
++        for j in range(len(m[0])):
+             for i in range(len(m)):
+                 if m[i][j] == 1:
+                     edges.append([i, j])
+-        print(edges)
++        # print(edges)
+         return edges
+Index: MatchingAdvertising/CTSLearner.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import numpy as np\n\n\n# Combinatorial Thompson Sampling Learner\nclass CTSLearner:\n    def __init__(self, n_ads, n_slots):\n        # Beta parameters for each edge-arm. Array looks like\n        # [\n        # [[1,1],[1,1],[1,1],[1,1]],    ## Ad 1 - [Slot1, Slot2, Slot3, Slot4]\n        # [[1,1],[1,1],[1,1],[1,1]],    ## Ad 2 - [Slot1, Slot2, Slot3, Slot4]\n        # [[1,1],[1,1],[1,1],[1,1]],    ## Ad 3 - [Slot1, Slot2, Slot3, Slot4]\n        # [[1,1],[1,1],[1,1],[1,1]]     ## Ad 4 - [Slot1, Slot2, Slot3, Slot4]\n        # ...\n        # ]\n        self.beta_parameters = np.array([[np.ones(shape=2) for j in range(n_slots)] for i in range(n_ads)])\n        # initialize parameters of learner\n        self.t = 0\n        # Rewards for each edge-arm\n        # [\n        # [[],[],[],[]],    ## Ad 1 - [Slot1, Slot2, Slot3, Slot4]\n        # [[],[],[],[]],    ## Ad 2 - [Slot1, Slot2, Slot3, Slot4]\n        # [[],[],[],[]],    ## Ad 3 - [Slot1, Slot2, Slot3, Slot4]\n        # [[],[],[],[]]     ## Ad 4 - [Slot1, Slot2, Slot3, Slot4]\n        # ...\n        # ]\n        self.rewards_per_arm = [[[] for j in range(n_slots)] for i in range(n_ads)]\n        self.collected_rewards = np.array([])\n\n    def update_observations(self, arm, reward):\n        self.rewards_per_arm[arm[0]][arm[1]].append(reward)\n\n    def pull_arm(self):\n        # pull arm\n        return\n\n    def update(self, superarm, reward):\n        self.t += 1\n        self.collected_rewards = np.append(self.collected_rewards, reward.sum())\n        for arm_i, arm in enumerate(superarm, start=0):\n            self.update_observations(arm, reward[arm_i])\n            self.beta_parameters[arm[0], arm[1], 0] += reward[arm_i]\n            self.beta_parameters[arm[0], arm[1], 1] += 1 - reward[arm_i]\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- MatchingAdvertising/CTSLearner.py	(revision 4a1ba30c82d8ff1fdb81f813fa83a675eab735f3)
++++ MatchingAdvertising/CTSLearner.py	(date 1588769162050)
+@@ -35,8 +35,8 @@
+ 
+     def update(self, superarm, reward):
+         self.t += 1
+-        self.collected_rewards = np.append(self.collected_rewards, reward.sum())
++        self.collected_rewards = np.append(self.collected_rewards, np.sum(reward))
+         for arm_i, arm in enumerate(superarm, start=0):
+             self.update_observations(arm, reward[arm_i])
+             self.beta_parameters[arm[0], arm[1], 0] += reward[arm_i]
+-            self.beta_parameters[arm[0], arm[1], 1] += 1 - reward[arm_i]
++            self.beta_parameters[arm[0], arm[1], 1] += np.max(reward) - reward[arm_i]
+Index: MatchingAdvertising/Advertiser.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import numpy as np\n\n\nclass Advertiser:\n    def __init__(self, bid, publisher):\n        self.bid = bid\n        self.q = np.zeros(shape=publisher.n_slots)\n        self.sampled_weights = np.zeros(shape=publisher.n_slots)\n        for i in range(len(self.q)):\n            self.q[i] = np.random.uniform()\n        self.q[::-1].sort()\n        print(self.q)\n\n        self.publisher = publisher\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- MatchingAdvertising/Advertiser.py	(revision 4a1ba30c82d8ff1fdb81f813fa83a675eab735f3)
++++ MatchingAdvertising/Advertiser.py	(date 1588769162050)
+@@ -8,7 +8,7 @@
+         self.sampled_weights = np.zeros(shape=publisher.n_slots)
+         for i in range(len(self.q)):
+             self.q[i] = np.random.uniform()
+-        self.q[::-1].sort()
++        # self.q[::-1].sort()
+         print(self.q)
+ 
+         self.publisher = publisher
