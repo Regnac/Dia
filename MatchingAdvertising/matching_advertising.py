@@ -153,15 +153,15 @@ def get_context_index(context, contexts):
 # T - Time horizon - number of days
 T = 200
 
-number_of_experiments = 1
+number_of_experiments = 80
 
 # number of advertisers for each publisher
 
 N_ADS = 4
 N_SLOTS = 4
-N_USERS = 100  # number of users for each day
+N_USERS = 30  # number of users for each day
 N_KLASSES = 3
-PERIOD_TIME = 50
+PERIOD_TIME = 25
 
 publisher1 = Publisher(n_slots=4)
 
@@ -300,22 +300,22 @@ for publisher in publishers:
                                     axis=0)
     regret_disagregate = list(map(lambda x: np.sum(x), cumsum_disaggregate))
     ######### WRONG CURVES
-    plt.figure(1)
-    plt.xlabel("t")
-    plt.ylabel("Regret")
-    colors = ['r', 'g', 'b']
-    plt.plot(regret_aggregate, 'm')
-    plt.legend(["Aggregated"])
-    plt.show()
-
-
-    plt.figure(1)
-    plt.xlabel("t")
-    plt.ylabel("Regret")
-    colors = ['r', 'g', 'b']
-    plt.plot(regret_disagregate, 'orange')
-    plt.legend(["Disaggregated"])
-    plt.show()
+    # plt.figure(1)
+    # plt.xlabel("t")
+    # plt.ylabel("Regret")
+    # colors = ['r', 'g', 'b']
+    # plt.plot(regret_aggregate, 'm')
+    # plt.legend(["Aggregated"])
+    # plt.show()
+    #
+    #
+    # plt.figure(1)
+    # plt.xlabel("t")
+    # plt.ylabel("Regret")
+    # colors = ['r', 'g', 'b']
+    # plt.plot(regret_disagregate, 'orange')
+    # plt.legend(["Disaggregated"])
+    # plt.show()
     #######################
 
     # Plot reward

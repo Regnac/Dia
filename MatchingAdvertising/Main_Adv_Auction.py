@@ -138,7 +138,7 @@ def print_result():
 #------------PARAMETER SETTING------------#
 
 T = 200
-number_of_experiments = 10
+number_of_experiments = 30
 
 N_BIDS = 4                  #Number of linspaced Bids
 N_BUDGET = 4                #Number of Daily budget choices
@@ -148,8 +148,8 @@ N_ADS = 4
 N_SLOTS = 4
 N_USERS = 30                #Number of users Visiting the site each day
 N_KLASSES = 3               #Classes of user (used only to get the starting q)
-N_AUCTION = 10              #Number of auction per day
-tot_b = 70000         #Total Budget
+N_AUCTION = 3              #Number of auction per day
+tot_b = 80000         #Total Budget
 bids = np.linspace(start = 0.25, stop = 1, num = N_BIDS)
 bid_competitor = bids[int(N_BIDS/2)-1]
 dbud = ((tot_b/T) / 4) / N_SUBCAMPAIGN        #Used only to divide daily budget
