@@ -3,7 +3,7 @@ from Advertiser import *
 from AdAuctionEnvironment import *
 from VCG_auction import *
 from KnapOptimizer import *
-from AdvLearner import *
+from GPTSLearner import *
 from User import *
 from CTSLearner import *
 from hungarian_algorithm import hungarian_algorithm, convert_matrix
@@ -238,7 +238,7 @@ def print_result():
 # T - Time horizon - number of days
 T = 200
 
-number_of_experiments = 1
+number_of_experiments = 30
 
 # number of advertisers for each publisher
 DAYS_SPLIT = 25
@@ -248,12 +248,12 @@ N_SUBCAMPAIGN = 4
 N_ARMS = N_BIDS * N_BUDGET
 N_ADS = 4
 N_SLOTS = 4
-N_USERS = 100               #Number of users Visiting the site each day
+N_USERS = 30               #Number of users Visiting the site each day
 N_KLASSES = 3               #Classes of user (used only to get the starting q)
-N_AUCTION = 1               #Number of auction per day
-tot_b = 100000             #Total Budget
+N_AUCTION = 3               #Number of auction per day
+tot_b = 80000             #Total Budget
 bids = np.linspace(start = 0.25, stop = 1, num = N_BIDS)
-bid_competitor = bids[int(N_BIDS/2)-2]
+bid_competitor = bids[int(N_BIDS/2)-1]
 dbud = ((tot_b/T) / 4) / N_SUBCAMPAIGN        #Used only to divide daily budget
 d_budget= [dbud *3, dbud *3, dbud *3, dbud *3]          #Daily budget competitor (static)
 our_d_budget = [dbud, dbud * 2, dbud * 3, dbud * 4]     #Our possible choice of daily budget
@@ -338,7 +338,7 @@ for publisher in publishers:
 
         learner_by_subcampaign = []
         for subcampaign in range(N_SUBCAMPAIGN):
-            advlearner = AdvLearner(n_arms =N_ARMS,n_ads = N_ADS,n_bids = N_BIDS, n_budget= N_BUDGET, t = T, bids = bids, D_budget = our_d_budget)
+            advlearner = GPTSLearner(n_arms =N_ARMS, n_ads = N_ADS, n_bids = N_BIDS, n_budget= N_BUDGET, t = T, bids = bids, D_budget = our_d_budget)
             learner_by_subcampaign.append(advlearner)
 
         knap = KnapOptimizer(n_bids=N_BIDS, n_budget=N_BUDGET, n_subcampaign=4,bids = bids)

@@ -4,7 +4,7 @@ from Publisher import *
 from Advertiser import *
 from VCG_auction import *
 from AdAuctionEnvironment import *
-from AdvLearner import *
+from GPTSLearner import *
 from User import *
 from CTSLearner import *
 from BiddingEnvironment import *
@@ -30,6 +30,18 @@ def calculate_opt(real_q, n_slots, n_ads):
 def calculate_opt_advreal(real_q):
     opt_q = np.max(real_q[0])
     return opt_q
+
+def make_smoother(data):
+    smoothed = []
+    for d_i, d in enumerate(data):
+        if d_i >= 25:
+            smoothed.append(np.mean(data[d_i - 25:d_i]))
+        else:
+            if d_i >= 5:
+                smoothed.append(np.mean(data[d_i - 5:d_i]))
+            else:
+                smoothed.append(d)
+    return smoothed
 
 def generate_klasses_proportion(n_klasses):
     p = np.random.randint(100, size=n_klasses) + 20
@@ -126,7 +138,7 @@ def print_result():
 #------------PARAMETER SETTING------------#
 
 T = 200
-number_of_experiments = 1
+number_of_experiments = 10
 
 N_BIDS = 4                  #Number of linspaced Bids
 N_BUDGET = 4                #Number of Daily budget choices
@@ -157,7 +169,7 @@ no_money_d = np.zeros((4, 4), dtype=bool)
 no_money_b = np.zeros((4), dtype=bool)
 has_finished = np.zeros((4,T), dtype=int)
 
-b1 = []     #Cumulative Budget of Advertisers
+b1 = []     #Budget of Advertisers
 b2 = []
 b3 = []
 b4 = []
@@ -205,7 +217,7 @@ for publisher in publishers:
 
         learner_by_subcampaign = []
         for subcampaign in range(N_SUBCAMPAIGN):
-            advlearner = AdvLearner(n_arms =N_ARMS,n_ads = N_ADS,n_bids = N_BIDS, n_budget= N_BUDGET, t = T, bids = bids, D_budget = our_d_budget)
+            advlearner = GPTSLearner(n_arms =N_ARMS,n_ads = N_ADS,n_bids = N_BIDS, n_budget= N_BUDGET, t = T, bids = bids, D_budget = our_d_budget)
             learner_by_subcampaign.append(advlearner)
 
         knap = KnapOptimizer(n_bids=N_BIDS, n_budget=N_BUDGET, n_subcampaign=4,bids = bids)
@@ -278,7 +290,6 @@ for publisher in publishers:
 
     #After finish the experiment we can print the result and see the choice of learner and the remaining budget
     print_result()
-    print("TOTAL STEP: ", (N_USERS * N_AUCTION), "/", has_finished[0])
     for i in range(N_SUBCAMPAIGN):
         cts_rewards_per_experiment_aggregate[i] = np.array(cts_rewards_per_experiment_aggregate[i])
     opt_q_aggregate = calculate_opt_advreal(real_q_aggregate)
@@ -288,16 +299,8 @@ for publisher in publishers:
         cumsum_aggregate.append(np.cumsum(np.mean(opt_q_aggregate - (cts_rewards_per_experiment_aggregate[i]/(N_USERS*N_AUCTION)), axis=0),axis=0))
         reward_aggregate.append(np.mean(cts_rewards_per_experiment_aggregate[i],axis=0))
 
-    smooth_reward = []
-    reward_aggregate2 = np.mean(reward_aggregate, axis=0)
-    for r_i, r in enumerate(reward_aggregate2):
-        if r_i >= 25:
-            smooth_reward.append(np.mean(reward_aggregate2[r_i - 25:r_i]))
-        else:
-            if r_i >= 5:
-                smooth_reward.append(np.mean(reward_aggregate2[r_i - 5:r_i]))
-            else:
-                smooth_reward.append(r)
+    smooth_reward = make_smoother(np.mean(reward_aggregate, axis=0))
+
 
     plt.figure(1)
     plt.title("Budget")

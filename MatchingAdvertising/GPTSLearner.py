@@ -3,7 +3,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C,Matern as M
 
 
-class AdvLearner(Learner):
+class GPTSLearner(Learner):
     def __init__(self, n_arms,n_ads,n_bids, n_budget,t, D_budget, bids):
         super().__init__(n_arms)
         self.arms = np.array([[np.ones(shape=1) for j in range(n_ads)] for i in range(n_ads)])
